@@ -10,3 +10,5 @@ The idea is to use this geodesic algorithm for segmentation of meshes. This feat
 Remember, this plugin is very slow as of now. The python code is just a mere re-implementation of C++ code using replacement packages of python.
 
 Suggestions are welcome. I am not an experienced python programmer yet, so any help will be useful.
+
+Please refer to the wiki section for Install and usage. In case you downloaded this zip, you should find a folder named docs
