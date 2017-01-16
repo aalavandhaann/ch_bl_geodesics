@@ -10,6 +10,10 @@ from mathutils.bvhtree import BVHTree;
 
 
 BEVEL_DEPTH_FACTOR = 0.002941176;
+MAX_ZOOM_DISTANCE = 100.0;
+MIN_ZOOM_DISTANCE = 1.0;
+FRIENDLY_ZOOM_DISTANCE = 3.5;
+TEXT_SCALE_VALUE = 0.001;
 
 def getQuadMesh(context, object):
     bm = getBMMesh(context, object);
@@ -306,6 +310,13 @@ def getScreenLookAxis(context):
     return axis, math.degrees(angle);    
 
 def drawText(context, text, location):
+    v3d = context.space_data;
+    rv3d = v3d.region_3d;
+    text_scale = TEXT_SCALE_VALUE * ((max(min(MAX_ZOOM_DISTANCE, rv3d.view_distance), MIN_ZOOM_DISTANCE)) / FRIENDLY_ZOOM_DISTANCE);
+#     print("RV3D PARAMETERS ::: " , rv3d.view_location, rv3d.view_distance);
+#     print('TEXT SCALE USED :::: ', text_scale);
+    
+    
     font_id = 0;
     
     axis, angle = getScreenLookAxis(context);
@@ -317,13 +328,13 @@ def drawText(context, text, location):
     bgl.glRotatef(angle, axis.x, axis.y, axis.z);
     
     bgl.glPushMatrix();
-    bgl.glScalef(0.1,0.1,0.1);
+    bgl.glScalef(text_scale,text_scale,text_scale);
     
     bgl.glPushMatrix();
     bgl.glRotatef(90.0, 1.0, 0.0, 0.0);
     
     blf.position(font_id, 0.0, 0.0 , 0.0);
-    blf.size(font_id, 24, 72);
+    blf.size(font_id, 72, 72);
     bgl.glColor4f(0.0, 0.0, 0.0, 1.0);
     blf.draw(0, text);
 #     blf.rotation(0, 1.57);
@@ -389,86 +400,11 @@ def drawLine(a, b, linethickness, linecolor):
     
     bgl.glEnd();
 
-#An utitlity function to parse and load a humma work file
-def parseMappingFile(context, filepath, mesh, correspondencemap=None, target=None):   
-    print('PARSE MAPPING FILE FOR ', mesh.name); 
-    realpath = bpy.path.abspath(filepath);
-    f = open(realpath, 'r', encoding='utf-8');
-    
-    if(correspondencemap is None):
-        print('NO CORRESPONDENCE MAP SUPPLIED SO USE DEFAULT ', correspondencemap)
-        cmap = mesh.correspondencemap;
-    else:
-        cmap = correspondencemap;
-    
-    cmap.clear();
-    map_format = "Unknown";
-    bm = None;
-    #First gather all the required information
-    with f as lines:
-        for index, line in enumerate(lines):
-            mapitem = cmap.add();
-            
-            if(map_format == "Humma"):
-                triindex,bary1,bary2,bary3 = line.strip().split(',');         
-                mapitem.mappedfaceid = int(triindex.strip());
-                mapitem.mappedbaryratios = Vector((float(bary1.strip()),float(bary2.strip()),float(bary3.strip())));
-            
-            elif(map_format == "Standard"):
-                triindex,bary1,bary2,bary3 = line.strip().split(' ');
-                mapitem.mappedfaceid = int(triindex.strip()) + 1;
-                mapitem.mappedbaryratios = Vector((float(bary1.strip()),float(bary2.strip()),float(bary3.strip())));
-            
-            elif(map_format == "V2V"):
-                val = line.strip().split(' ');
-                v = bm.verts[int(val[0]) - 1];
-                tri = v.link_faces[0];
-                u,v,w,ratio, isinside = getBarycentricCoordinate(v.co, tri.loops[0].vert.co,tri.loops[1].vert.co,tri.loops[2].vert.co, snapping=False);
-                mapitem.mappedfaceid = tri.index + 1;
-                mapitem.mappedbaryratios = Vector((u,v,w));                
-            
-            else:
-                try:
-                    triindex,bary1,bary2,bary3 = line.strip().split(',');         
-                    mapitem.mappedfaceid = int(triindex.strip());
-                    mapitem.mappedbaryratios = Vector((float(bary1.strip()),float(bary2.strip()),float(bary3.strip())));
-                    map_format = "Humma";
-                    print('FIGURED OUT THAT MAPPING FORMAT IS HUMMA')
-                except:
-                    try:
-                        triindex,bary1,bary2,bary3 = line.strip().split(' ');
-                        mapitem.mappedfaceid = int(triindex.strip()) + 1;
-                        mapitem.mappedbaryratios = Vector((float(bary1.strip()),float(bary2.strip()),float(bary3.strip())));
-                        map_format = "Standard";
-                    except:
-                        val = line.strip().split(' ');
-                        if(len(val) == 1):
-                            map_format = "V2V";
-                            bm = getBMMesh(context, target, useeditmode=False);
-                            ensurelookuptable(bm);
-                            v = bm.verts[int(val[0]) - 1];
-                            tri = v.link_faces[0];
-                            u,v,w,ratio, isinside = getBarycentricCoordinate(v.co, tri.loops[0].vert.co,tri.loops[1].vert.co,tri.loops[2].vert.co, snapping=False);
-                            mapitem.mappedfaceid = tri.index + 1;
-                            mapitem.mappedbaryratios = Vector((u,v,w));
-                        else:
-                            print('NEITHER COMMA NOR SPACE SEPARATION NOR VERTEX TO VERTEX MAPPING WORKED', len(line.strip()));
-                            print('PROBLEM IN LINE ::: ', val, len(val), line.strip().split(' '), line, ':::::::::::');
-                            raise ValueError;
-    
-    if(bm):
-        bm.free();
-
-    f.close();
-    return mesh;
-
 def createIsoContourMesh(context, meshobject, isocontours, isamappedcontour = False):
-    iso_name = meshobject.name+"_isocontours";
-    if(isamappedcontour):
-        iso_name = meshobject.name+"_mapped_isocontours";
-    
+    iso_name = meshobject.name+"_isocontours_"+str(meshobject.iso_mesh_count);    
     try:
         existing = context.scene.objects[iso_name];
+        existing.name = "READY_FOR_DELETE";
         bpy.ops.object.select_all(action="DESELECT");
         existing.select = True;
         context.scene.objects.active = existing;
@@ -476,7 +412,9 @@ def createIsoContourMesh(context, meshobject, isocontours, isamappedcontour = Fa
     except KeyError:
         pass;
     
-    iso_mesh = bpy.data.meshes.new(iso_name);
+    meshobject.iso_mesh_count += 1;
+    temp_iso_name = meshobject.name+"_isocontours_"+str(meshobject.iso_mesh_count);    
+    iso_mesh = bpy.data.meshes.new(temp_iso_name);
     
     all_verts_tuples = [];
     
@@ -512,7 +450,7 @@ def createIsoContourMesh(context, meshobject, isocontours, isamappedcontour = Fa
     # Update mesh with new data
     iso_mesh.update();
     
-    iso_mesh_obj = bpy.data.objects.new(iso_name, iso_mesh);
+    iso_mesh_obj = bpy.data.objects.new(temp_iso_name, iso_mesh);
     iso_mesh_obj.data = iso_mesh;    
     context.scene.objects.link(iso_mesh_obj);
              
@@ -549,27 +487,33 @@ def createIsoContourMesh(context, meshobject, isocontours, isamappedcontour = Fa
         iso_index.index = index;
         contour_index.index = segment['contour_index'];
     
-#     bpy.ops.object.select_all(action="DESELECT");
-#     iso_mesh_obj.select = True;
-#     context.scene.objects.active = iso_mesh_obj;
-#     
-#     bpy.ops.object.convert(target="CURVE");
-#     bpy.data.curves[iso_mesh_obj.name].fill_mode = "FULL";
-#     max_dim = max(iso_mesh_obj.dimensions.x, iso_mesh_obj.dimensions.y, iso_mesh_obj.dimensions.z);
-#     bpy.data.curves[iso_mesh_obj.name].bevel_depth = BEVEL_DEPTH_FACTOR * max_dim;
-#     
-#     try:
-#         material = bpy.data.materials['ContourMaterial'];
-#     except:
-#         material = bpy.data.materials.new('ContourMaterial');
-#     
-#     material.diffuse_color = (0.003, 0.0, 0.8);
-#     material.alpha = 1;
-#     material.specular_color = (0.003, 0.0, 0.8);
-#     
-#     iso_mesh_obj.data.materials.clear();
-#     iso_mesh_obj.data.materials.append(material);
+    bpy.ops.object.select_all(action="DESELECT");
+    iso_mesh_obj.select = True;
+    context.scene.objects.active = iso_mesh_obj;
+     
+    bpy.ops.object.convert(target="CURVE");
+    bpy.data.curves[iso_mesh_obj.name].fill_mode = "FULL";
+    bpy.data.curves[iso_mesh_obj.name].bevel_resolution = 6;
+    max_dim = max(iso_mesh_obj.dimensions.x, iso_mesh_obj.dimensions.y, iso_mesh_obj.dimensions.z);
+    bpy.data.curves[iso_mesh_obj.name].bevel_depth = BEVEL_DEPTH_FACTOR * max_dim;
     
+    print(bpy.data.curves[iso_mesh_obj.name].bevel_depth, BEVEL_DEPTH_FACTOR * max_dim);
+     
+    try:
+        material = bpy.data.materials['IsoContourMaterial'];
+    except:
+        material = bpy.data.materials.new('IsoContourMaterial');
+     
+    material.diffuse_color = (0.003, 0.0, 0.8);
+    material.alpha = 1;
+    material.specular_color = (0.003, 0.0, 0.8);
+     
+    iso_mesh_obj.data.materials.clear();
+    iso_mesh_obj.data.materials.append(material);
+    
+    bpy.ops.object.select_all(action="DESELECT");
+    meshobject.select = True;
+    context.scene.objects.active = meshobject;
     
     return iso_mesh_obj;
 

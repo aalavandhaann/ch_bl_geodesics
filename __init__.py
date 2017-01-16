@@ -59,6 +59,7 @@ class ChenhanGeodesicsPanel(bpy.types.Panel):
             row = layout.row(align=True);
             row.operator(IsoContours.bl_idname, text="IsoContours");
 
+bpy.types.Object.iso_mesh_count = bpy.props.IntProperty(name="Isomesh count", description="Total Isomeshes", default=0);
 bpy.types.Object.isolines_count = bpy.props.IntProperty(name="Isolines count", description="Total IsoLines", default=10, min=1, max=100);
 
 bpy.types.Scene.path_color = bpy.props.FloatVectorProperty(

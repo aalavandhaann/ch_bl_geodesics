@@ -24,28 +24,26 @@ from chenhan_pp.helpers import getTriangleMappedPoints, getBarycentricValue, get
 __date__ ="$Mar 23, 2015 8:16:11 PM$"
 
 def DrawGL(self, context):
-    bgl.glEnable(bgl.GL_DEPTH_TEST);
-    if(context.scene.showisolines):
-        bgl.glDisable(bgl.GL_DEPTH_TEST);
-        bgl.glColor4f(*(1.0, 1.0, 0.0,1.0));
+    
+    bgl.glDisable(bgl.GL_DEPTH_TEST);
+    bgl.glColor4f(*(1.0, 1.0, 0.0,1.0));
+    bgl.glPointSize(15.0);
+    bgl.glBegin(bgl.GL_POINTS);
+    bgl.glVertex3f(*self.highlight_point);
+    bgl.glEnd();
+#     bgl.glEnable(bgl.GL_DEPTH_TEST);
+    if(len(self.isolines)):            
+        bgl.glColor4f(*(0.0, 1.0, 0.0,1.0));
         bgl.glPointSize(15.0);
         bgl.glBegin(bgl.GL_POINTS);
-        bgl.glVertex3f(*self.highlight_point);
-        bgl.glEnd();
-        bgl.glEnable(bgl.GL_DEPTH_TEST);
-        if(len(self.isolines)):            
-            bgl.glColor4f(*(0.0, 1.0, 0.0,1.0));
-            bgl.glPointSize(15.0);
-            bgl.glBegin(bgl.GL_POINTS);
-            bgl.glVertex3f(*self.isoorigin);
-            bgl.glEnd();        
-            
-            for segment in self.isolines:
-                drawLine(segment['start'], segment['end'], 1.0, (0.0, 0.0, 0.0,1.0));
-            
-            bgl.glDisable(bgl.GL_DEPTH_TEST);
-            
-            drawText(context, "Iso Origin", self.isoorigin);
+        bgl.glVertex3f(*self.isoorigin);
+        bgl.glEnd();        
+        drawText(context, "Iso Origin", self.isoorigin);
+        
+#         for segment in self.isolines:
+#             drawLine(segment['start'], segment['end'], 1.0, (0.0, 0.0, 0.0,1.0));
+#          
+        bgl.glDisable(bgl.GL_DEPTH_TEST);
     
     # restore opengl defaults
     bgl.glLineWidth(1);
@@ -112,7 +110,7 @@ class IsoContours(bpy.types.Operator):
                 if(face_index):
                     vco, vindex, dist = self.kd.find(hitpoint);
                     self.highlight_point = self.subject.matrix_world * self.subject.data.vertices[vindex].co;        
-        
+                    
         return {'PASS_THROUGH'};
         
     def invoke(self, context, event):
@@ -134,6 +132,9 @@ class IsoContours(bpy.types.Operator):
             
             context.scene.objects.active = self.subject;
             self.subject.select = True;
+            
+            
+            
             args = (self, context); 
             self._handle = bpy.types.SpaceView3D.draw_handler_add(DrawGL, args, 'WINDOW', 'POST_VIEW');
             context.window_manager.modal_handler_add(self);
