@@ -5,12 +5,13 @@ Created on Jun 30, 2016
 '''
 import bpy;
 from bpy.props import *;
-from chenhan_pp.ChenhanOperator import ChenhanGeodesicsOperator
+from chenhan_pp.ChenhanOperator import ChenhanGeodesicsOperator;
+from chenhan_pp.IsoContours import IsoContours;
 
 bl_info = {
     "name": "Chenhan Geodesics",
     "version": (1, 0),
-    "blender": (2, 7, 5),
+    "blender": (2, 7, 6),
     "location": "View3D > Object > Chenhan Geodesics",
     "description": "Chenhan geodesics demonstration using Blender",
     "warning": "",
@@ -51,6 +52,14 @@ class ChenhanGeodesicsPanel(bpy.types.Panel):
             
             row = layout.row(align=True);
             row.operator(ChenhanGeodesicsOperator.bl_idname, text="Geodesics");
+            
+            row = layout.row(align=True);
+            row.prop(context.active_object, "isolines_count", "IsoLines Count");
+            
+            row = layout.row(align=True);
+            row.operator(IsoContours.bl_idname, text="IsoContours");
+
+bpy.types.Object.isolines_count = bpy.props.IntProperty(name="Isolines count", description="Total IsoLines", default=10, min=1, max=100);
 
 bpy.types.Scene.path_color = bpy.props.FloatVectorProperty(
     name = "Geodesic Path Color", 
