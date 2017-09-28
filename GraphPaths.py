@@ -57,7 +57,7 @@ class ChenhanGeodesics(GraphPaths):
     def __init__(self, context, mesh, bm_mesh, richmodel):
         super().__init__(context, mesh, bm_mesh);
         self.m_all_geos = [];
-        
+        print('DO YOU HAVE THE FAST VERSION ? ', self.isFastAlgorithmLoaded());
         if(self.isFastAlgorithmLoaded()):
         	verts = [];
         	faces = [];
@@ -85,10 +85,10 @@ class ChenhanGeodesics(GraphPaths):
     def isFastAlgorithmLoaded(self):
     	try:
     		if(chenhancc):
-    			print('FAST ALGORITHM MODULE EXISTS');
+#     			print('FAST ALGORITHM MODULE EXISTS');
     			return True;
     	except (NameError):
-    		print('FAST ALGORITHM MODULE DOES NOT EXISTS');
+#     		print('FAST ALGORITHM MODULE DOES NOT EXISTS');
     	return False;
     
     
