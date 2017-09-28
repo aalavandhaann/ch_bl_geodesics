@@ -41,7 +41,7 @@ def DrawGLLines(self, context, paths, temppaths, color, thickness, LINE_TYPE= "G
     bgl.glColor4f(0.0, 0.0, 0.0, 1.0)
 
 
-def ScreenPoint3D(context, event, ray_max=1000.0):
+def ScreenPoint3D(context, event, ray_max=10000.0):
     # get the context arguments
     scene = context.scene
     region = context.region
@@ -50,8 +50,8 @@ def ScreenPoint3D(context, event, ray_max=1000.0):
 
 
     # get the ray from the viewport and mouse
-    view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord)
-    ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
+    view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord);
+    ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord);
 
 
     if rv3d.view_perspective == 'ORTHO':
@@ -73,7 +73,10 @@ def ScreenPoint3D(context, event, ray_max=1000.0):
 
 
         # cast the ray
-        hit, normal, face_index = obj.ray_cast(ray_origin_obj, ray_target_obj)
+        try:
+            hit, normal, face_index = obj.ray_cast(ray_origin_obj, ray_target_obj);
+        except ValueError:
+            result, hit, normal, face_index = obj.ray_cast(ray_origin_obj, ray_target_obj);
 #        hit, normal, face_index, distance = bvhtree.ray_cast(ray_origin_obj, ray_target_obj);
         
         if face_index != -1:
