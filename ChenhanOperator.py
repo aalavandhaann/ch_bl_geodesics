@@ -22,7 +22,7 @@ import chenhan_pp.Constants as Constants;
 from chenhan_pp.MeshData import RichModel
 
 from chenhan_pp.DrawingUtilities import ScreenPoint3D, DrawGLLines
-from chenhan_pp.GraphPaths import ChenhanGeodesics
+from chenhan_pp.GraphPaths import ChenhanGeodesics, AnisotropicGeodesics, isFastAlgorithmLoaded;
 
 
 __author__="ashok"
@@ -165,14 +165,19 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         self.mousepointer.show_wire = False;
         self.mousepointer.show_all_edges = False;
         
-        self.richmodel = RichModel(self.bm, context.active_object);
-        self.richmodel.Preprocess();
-        
         bpy.ops.object.select_all(action="DESELECT");
         self.mesh.select = False;
         context.scene.objects.active = self.mesh;
         
-        self.chenhan = ChenhanGeodesics(context, context.active_object, self.bm, self.richmodel);
+        self.richmodel = None;
+        if(not isFastAlgorithmLoaded):
+            self.richmodel = RichModel(self.bm, context.active_object);
+            self.richmodel.Preprocess();
+        #self.chenhan = ChenhanGeodesics(context, context.active_object, self.bm, self.richmodel);
+        self.chenhan = AnisotropicGeodesics(context, context.active_object, self.bm, self.richmodel);
+        
+        if(isFastAlgorithmLoaded()):
+            self.richmodel = self.chenhan.getRichModel();
         
         self.paths = [];
         self.prev = {};
