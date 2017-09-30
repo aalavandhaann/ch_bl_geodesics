@@ -8,8 +8,8 @@ import bpy, time;
 from bpy.props import FloatVectorProperty;
 from mathutils import Vector;
 
-# from mathtoolbox import getBMMesh, ensurelookuptable;
-# from MeshToolBox import buildKDTree, getDuplicatedObject;
+# from SFM.basics.mathtoolbox import getBMMesh, ensurelookuptable;
+# from SFM.basics.MeshToolBox import buildKDTree, getDuplicatedObject;
 
 from chenhan_pp.MeshTools import getBMMesh, ensurelookuptable, buildKDTree, getDuplicatedObject
 

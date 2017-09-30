@@ -214,9 +214,9 @@ def need_curvatures(bm, obj):
         mean_list.append((k1+k2)*0.5);
         gaussian_list.append(k1*k2);
     sx = np.abs(k1_list) - np.abs(k2_list);
-    print(k1_list);
-    print(k2_list);
-    print(sx);
+#     print(k1_list);
+#     print(k2_list);
+#     print(sx);
     
     return k1_list, k2_list, sx, p1_list, p2_list, mean_list, gaussian_list;
 

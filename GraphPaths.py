@@ -41,8 +41,6 @@ def rgb(minimum, maximum, value):
 
 def applyColoringForMeshErrors(context, error_mesh, error_values, *, A = None, B = None, v_group_name = "lap_errors", normalize = False):
         
-        
-        print(error_values[:50]);
         c = error_values.T;
         
         if(not A and not B):
