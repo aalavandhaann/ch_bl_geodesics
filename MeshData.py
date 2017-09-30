@@ -8,7 +8,7 @@ import bpy, bmesh, math;
 from mathutils import Vector
 
 import chenhan_pp.Constants as Constants;
-# from SFM.basics.MeshToolBox import ensurelookuptable;
+# from basics.MeshToolBox import ensurelookuptable;
 from chenhan_pp.MeshTools import ensurelookuptable;
 from chenhan_pp.stl_classes import Pair, make_pair;
 from chenhan_pp.MeshComponents import CEdge, CFace;

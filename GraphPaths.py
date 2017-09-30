@@ -4,10 +4,11 @@ from mathutils import Vector;
 import bpy;
 from chenhan_pp.MeshTools import ensurelookuptable, getBMMesh;
 from chenhan_pp.TrimeshCurvatures import need_curvatures;
-
+__fastAlgorithm = False;
 try:
 	import chenhancc;
 	from chenhancc import CRichModel as RichModel, CICHWithFurtherPriorityQueue, CPoint3D, CFace;
+	__fastAlgorithm = True;
 except ImportError:
 	from chenhan_pp.CICHWithFurtherPriorityQueue import CICHWithFurtherPriorityQueue
 # from chenhan.geodesics import CICHWithFurtherPriorityQueue;
@@ -21,11 +22,13 @@ import matplotlib.colors as clrs;
 
 
 def isFastAlgorithmLoaded():
-	try:
-		import chenhancc;
-		return True;
-	except (NameError):
-		return False;
+	return __fastAlgorithm;
+
+# 	try:
+# 		import chenhancc;
+# 		return True;
+# 	except (NameError):
+# 		return False;
 
 
 
