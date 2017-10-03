@@ -41,7 +41,7 @@ def DrawGLLines(self, context, paths, temppaths, color, thickness, LINE_TYPE= "G
     bgl.glColor4f(0.0, 0.0, 0.0, 1.0)
 
 
-def ScreenPoint3D(context, event, ray_max=10000.0):
+def ScreenPoint3D(context, event, ray_max=1000.0):
     # get the context arguments
     scene = context.scene
     region = context.region
@@ -53,19 +53,19 @@ def ScreenPoint3D(context, event, ray_max=10000.0):
     view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord);
     ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord);
 
-
-    if rv3d.view_perspective == 'ORTHO':
-        # move ortho origin back
-        ray_origin = ray_origin - (view_vector * (ray_max / 2.0));
-
-
-    ray_target = ray_origin + (view_vector * ray_max)
+    if bpy.app.version < (2, 77, 0):
+        if rv3d.view_perspective == 'ORTHO':
+            # move ortho origin back
+            ray_origin = ray_origin - (view_vector * (ray_max / 2.0));
+    
+    else:
+        ray_max = 1.0;
+    
+    ray_target = ray_origin + (view_vector * ray_max);
 
 
     def obj_ray_cast(obj, matrix):
         """Wrapper for ray casting that moves the ray into object space"""
-
-
         # get the ray relative to the object
         matrix_inv = matrix.inverted();
         ray_origin_obj = matrix_inv * ray_origin;

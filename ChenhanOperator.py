@@ -133,8 +133,8 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
             return {'PASS_THROUGH'};
 
         return {'PASS_THROUGH'} 
-        
-    def invoke(self, context, event):
+    
+    def startModalOperations(self, context):
         self.pausedrawing = False;
         self.lastkeypress = time.time();
         self.lastmousepress = time.time();
@@ -190,6 +190,15 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         self._handle = bpy.types.SpaceView3D.draw_handler_add(DrawGLLines, args, 'WINDOW', 'POST_VIEW');
         context.window_manager.modal_handler_add(self);
         return {'RUNNING_MODAL'}
+        
+    
+    def invoke(self, context, event):
+        print('INVOKE MODALITY')
+        return self.startModalOperations(context);
+    
+    def execute(self, context):
+        print('EXECUTE MODALITY')
+        return self.startModalOperations(context);
 
 
 def register():
