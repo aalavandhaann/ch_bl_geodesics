@@ -56,7 +56,8 @@ def ScreenPoint3D(context, event, ray_max=1000.0):
     if bpy.app.version < (2, 77, 0):
         if rv3d.view_perspective == 'ORTHO':
             # move ortho origin back
-            ray_origin = ray_origin - (view_vector * (ray_max / 2.0));
+#             ray_origin = ray_origin - (view_vector * (ray_max / 2.0));
+            pass;
     
     else:
         ray_max = 1.0;
