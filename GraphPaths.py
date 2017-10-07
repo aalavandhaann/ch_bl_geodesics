@@ -253,6 +253,7 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     	k1_l = np.abs(k1_l);
     	k2_l = np.abs(k2_l);
     	applyColoringForMeshErrors(self.m_context, self.m_mesh, sx, v_group_name = "sx_colors");
+    	print('CALCULATE NEW METRIC AND APPLY ON EDGES ');
 #     	for edge in self.m_richmodel.m_Edges:
 #     		left_vert_index = edge.indexOfLeftVert;
 #     		right_vert_index = edge.indexOfRightVert;
@@ -267,11 +268,19 @@ class AnisotropicGeodesics(ChenhanGeodesics):
 #     		lambda_2 = 1.0 / (1.0 + (self.user_gamma * s_x));
 #     		theta = v.angle(u1);
 # #     		print(edge.indexOfLeftVert, edge.indexOfRightVert, theta, lambda_1, lambda_2);
-# #     		gx_v = edge.length * (((lambda_1 * math.cos(theta))**2) + ((lambda_2 * math.sin(theta))**2))**0.5;
-#     		gx_v = 1.0 * (((lambda_1 * math.cos(theta))**2) + ((lambda_2 * math.sin(theta))**2))**0.5;
-#     		if isinstance(gx_v, complex):
-#     			gx_v = gx_v.real;
-#     		edge.length = gx_v;
-
+#     		gx_v = edge.length * (((lambda_1 * math.cos(theta)**2)) + ((lambda_2 * math.sin(theta)**2)))**0.5;
+# #     		gx_v = 1.0 * ((lambda_1 * math.cos(theta)**2) + (lambda_2 * math.sin(theta)**2))**0.5;
+#     		gx_v = np.array([gx_v]).astype(float)[0];
+#     		edge.length += gx_v;
+#     	
+#     	
+#     	print('COMPUTE OTHER PROPERTIES BASED ON NEW EDGE LENGTHS');
+#     	self.m_richmodel.CollectAndArrangeNeighs();
+#     	self.m_richmodel.ComputeAnglesAroundVerts();
+#     	self.m_richmodel.ComputePlanarCoordsOfIncidentVertForEdges();
+    	print('FINSHED PROCESSING THE ANISOTROPIC EMBEDDING FOR THE GIVEN MODEL');
+# 			ComputeNumOfHoles();
+# 			ComputeNumOfComponents();
+			
 
 
