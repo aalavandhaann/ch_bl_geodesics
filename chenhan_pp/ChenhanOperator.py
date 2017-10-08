@@ -65,6 +65,7 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         #=======================================================================
         
         if event.type in {'ESC'}:
+            print('INDICES :: ', self.chenhan.m_seed_indices);
             context.area.header_text_set();
             bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW');
             
@@ -94,7 +95,7 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
                         return {'PASS_THROUGH'};                
                 
                 self.chenhan.addSeedIndex(index);
-                
+                print('ADDED SEED INDEX ', index);
                 self.currentseed = index;
                 stable_paths = [{'start':-1, 'end':-1, 'points':None}];
                 
