@@ -530,13 +530,16 @@ def ScreenPoint3D(context, event, mesh, *, ray_max=1000.0, position_mouse = True
     ray_origin = view3d_utils.region_2d_to_origin_3d(region, rv3d, coord)
 
 
-    if rv3d.view_perspective == 'ORTHO':
-        ray_max=100000.0
-        # move ortho origin back
-        ray_origin = ray_origin - (view_vector * (ray_max / 2.0));
-
-
-    ray_target = ray_origin + (view_vector * ray_max)
+    if bpy.app.version < (2, 77, 0):
+        if rv3d.view_perspective == 'ORTHO':
+            # move ortho origin back
+#             ray_origin = ray_origin - (view_vector * (ray_max / 2.0));
+            pass;
+    
+    else:
+        ray_max = 1.0;
+    
+    ray_target = ray_origin + (view_vector * ray_max);
 
 
     def obj_ray_cast(obj, matrix):
@@ -547,11 +550,13 @@ def ScreenPoint3D(context, event, mesh, *, ray_max=1000.0, position_mouse = True
         matrix_inv = matrix.inverted();
         ray_origin_obj = matrix_inv * ray_origin;
         ray_target_obj = matrix_inv * ray_target;
-
+        ray_direction_obj = ray_target_obj - ray_origin_obj;
 
         # cast the ray
-        hit, normal, face_index = obj.ray_cast(ray_origin_obj, ray_target_obj)
-#        hit, normal, face_index, distance = bvhtree.ray_cast(ray_origin_obj, ray_target_obj);
+        try:
+            hit, normal, face_index = obj.ray_cast(ray_origin_obj, ray_target_obj);
+        except ValueError:
+            result, hit, normal, face_index = obj.ray_cast(ray_origin_obj, ray_direction_obj);
         
         if face_index != -1:
             return hit, normal, face_index;
