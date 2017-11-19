@@ -15,11 +15,13 @@ from mathutils import Vector, Matrix;
 from mathutils.bvhtree import BVHTree;
 
 from chenhan_pp.MeshData import RichModel
+from chenhan_pp.GraphPaths import ChenhanGeodesics;
+
 from chenhan_pp.CICHWithFurtherPriorityQueue import CICHWithFurtherPriorityQueue
 from chenhan_pp.helpers import getBMMesh, ensurelookuptable, getBarycentricCoordinate, getCartesianFromBarycentre, getTriangleArea, getGeneralCartesianFromPolygonFace;
 from chenhan_pp.helpers import buildKDTree, getDuplicatedObject, getQuadMesh;
 from chenhan_pp.helpers import getScreenLookAxis, drawLine, drawText, drawTriangle, ScreenPoint3D, createIsoContourMesh;
-from chenhan_pp.helpers import getTriangleMappedPoints, getBarycentricValue, getMappedContourSegments;
+from chenhan_pp.helpers import getTriangleMappedPoints, getBarycentricValue, getMappedContourSegments, GetIsoLines;
 
 __date__ ="$Mar 23, 2015 8:16:11 PM$"
 
@@ -76,7 +78,8 @@ class IsoContours(bpy.types.Operator):
         context.area.tag_redraw();
         
         if(not context.scene.isolinesupdated and self.alg):
-            self.isolines = self.alg.GetIsoLines(self.subject.isolines_count+1);
+            self.isolines = GetIsoLines(self.subject.isolines_count+1, self.subject, self.richmodel, self.vertex_distances);
+#             self.isolines = self.alg.GetIsoLines(self.subject.isolines_count+1);
             createIsoContourMesh(context, self.subject, self.isolines);   
             
             for segment in self.isolines:
@@ -88,6 +91,9 @@ class IsoContours(bpy.types.Operator):
         
         if event.type in {'ESC'}:       
             bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW'); 
+            if(self.bm):
+                self.bm.free();
+                
             return {'CANCELLED'}
         
         elif(event.type == 'I' and event.value == 'PRESS'):
@@ -97,9 +103,10 @@ class IsoContours(bpy.types.Operator):
                 if(event.type == "I"):
                     self.hit, onMesh, face_index, hitpoint = ScreenPoint3D(context, event, self.subject, position_mouse = False);
                     if(self.richmodel):
-                        vco, vindex, dist = self.kd.find(hitpoint);
-                        self.alg = CICHWithFurtherPriorityQueue(inputModel=self.richmodel, indexOfSourceVerts=[vindex]);
-                        self.alg.Execute();
+                        vco, vindex, dist = self.kd.find(hitpoint);                        
+                        self.alg.addSeedIndex(vindex);        
+                        self.vertex_distances = self.alg.getVertexDistances(vindex);      
+                        print(self.vertex_distances);          
                         self.isoorigin = self.subject.matrix_world * self.subject.data.vertices[vindex].co;
                         context.scene.isolinesupdated = False;
                         return {'RUNNING_MODAL'};
@@ -116,14 +123,17 @@ class IsoContours(bpy.types.Operator):
     def invoke(self, context, event):
         if(context.active_object):
             self.subject = context.active_object;            
-            bm = getBMMesh(context, self.subject, False);            
+            self.bm = getBMMesh(context, self.subject, False);      
+                  
             try:
-                self.richmodel = RichModel(bm, self.subject);
+                self.richmodel = RichModel(self.bm, self.subject);
                 self.richmodel.Preprocess();
             except: 
+                print('CANNOT CREATE RICH MODEL');
                 self.richmodel = None;
             
-            self.alg = None;
+            self.vertex_distances = [];
+            self.alg = ChenhanGeodesics(context, self.subject, self.bm, self.richmodel);
             self.isolines = [];
             self.isoorigin = ();
             self.highlight_point = (0,0,0);
@@ -132,8 +142,6 @@ class IsoContours(bpy.types.Operator):
             
             context.scene.objects.active = self.subject;
             self.subject.select = True;
-            
-            
             
             args = (self, context); 
             self._handle = bpy.types.SpaceView3D.draw_handler_add(DrawGL, args, 'WINDOW', 'POST_VIEW');

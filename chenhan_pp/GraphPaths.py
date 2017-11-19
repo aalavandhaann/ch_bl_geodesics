@@ -138,7 +138,9 @@ class GraphPaths:
     
     def getSeedIndices(self):
         return self.m_seed_indices;
-
+    
+    def getVertexDistances(self, seed_index):
+    	return [];
 
 class ChenhanGeodesics(GraphPaths):
     
@@ -150,6 +152,7 @@ class ChenhanGeodesics(GraphPaths):
         super().__init__(context, mesh, bm_mesh);
         self.m_all_geos = [];
         print('DO YOU HAVE THE FAST VERSION ? ', isFastAlgorithmLoaded());
+        
         if(isFastAlgorithmLoaded()):
         	verts = [];
         	faces = [];
@@ -168,13 +171,28 @@ class ChenhanGeodesics(GraphPaths):
         	self.m_richmodel = richmodel;
         
         ensurelookuptable(bm_mesh);
-#         self.algo = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[v.index for v in bm_mesh.verts]);
-#         self.algo.Execute();
-#         self.algo.PickShortestPaths(self.m_richmodel.GetNumOfVerts());
-#         print('TABLE OF RESULTING PATHS ::: ');
-#         print(self.algo.m_tableOfResultingPaths[0], self.m_richmodel.Vert(0));
+
     def getRichModel(self):
     	return self.m_richmodel;
+    
+    
+    def getVertexDistances(self, seed_index):
+    	try:
+    		indice = self.m_seed_indices.index(seed_index);
+    		if(not self.m_all_geos[indice]):
+    			if(isFastAlgorithmLoaded()):
+    				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
+    			else:
+    				alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
+    				alg.Execute();
+    				
+    		alg = self.m_all_geos[indice];	
+    		return [iav.disUptodate for iav in alg.m_InfoAtVertices];
+    		
+    	except ValueError:
+    		print("THE intended seed_index does not exist, so returning NONE");
+    		return None;
+    
     
     def addSeedIndex(self, seed_index, passive=False):
         super().addSeedIndex(seed_index);
@@ -201,7 +219,7 @@ class ChenhanGeodesics(GraphPaths):
         removed_index = super().removeSeedIndex(seed_index);
         if(removed_index != -1):
             del self.m_all_geos[removed_index];
-            
+    
     def path_between(self, seed_index, target_index):        
         try:
             indice = self.m_seed_indices.index(seed_index);

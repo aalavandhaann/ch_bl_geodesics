@@ -8,6 +8,8 @@ from bpy.props import FloatVectorProperty;
 from mathutils import Vector, Matrix;
 from mathutils.bvhtree import BVHTree;
 
+from chenhan_pp.MeshData import RichModel, CombinePointAndNormalTo, CombineTwoNormalsTo;
+from chenhan_pp import Constants;
 
 BEVEL_DEPTH_FACTOR = 0.002941176;
 MAX_ZOOM_DISTANCE = 100.0;
@@ -682,4 +684,107 @@ def getMappedContourSegments(context, subject, reference, isocontours, reference
             mappedcontours[0].append(mapped_segment);
     
     return mappedcontours;
+
+def GetIsoLines(num, meshobject, model = None, vertex_distances= [], *, useDistance = -1.0, contour_index=-1, contour_point=None):
+    
+    if(not model):
+        model = RichModel(getBMMesh(bpy.context, meshobject, useeditmode=False), meshobject);
+        model.Preprocess();
+    
+    farestDis = 0.0;
+    isolines = [];
+    
+    if(useDistance < 0.0):
+        for distance in vertex_distances:
+            farestDis = max(farestDis, distance);
+    else:
+        farestDis = useDistance;
+        
+    gap = farestDis / float(num);
+    
+    points = [];
+    
+    for i in range(model.GetNumOfFaces()):
+        high, middle, low, total = 0,0,0,0;
+        highestDis = -Constants.FLT_MAX;
+        lowestDis = Constants.FLT_MAX;
+        fBadFace = False;
+        
+        for j in range(3):
+            if (vertex_distances[model.Face(i).verts[j]] > (10000.0  / model.m_scale)):
+                fBadFace = True;
+                break;
+            #Find the highest distance
+            if (vertex_distances[model.Face(i).verts[j]] > highestDis):
+                high = model.Face(i).verts[j];
+                highestDis = vertex_distances[model.Face(i).verts[j]];
+
+            if (vertex_distances[model.Face(i).verts[j]] < lowestDis):
+                low = model.Face(i).verts[j];
+                lowestDis = vertex_distances[model.Face(i).verts[j]];
+                
+            total += model.Face(i).verts[j];
+    
+        if(fBadFace):
+            continue;
+        if(high == low):
+            continue;
+        
+        middle = total - high - low;
+        
+        ptLow = model.ComputeShiftPoint(low);
+        ptMiddle = model.ComputeShiftPoint(middle);
+        ptHigh = model.ComputeShiftPoint(high);
+        
+        for j in range(int(vertex_distances[low] / gap) + 1, int(vertex_distances[middle] / gap)+1):
+            segment = {};
+            dis = gap * j;
+            
+            #Ensure that lines plotted are always below the requested farthest distance
+            if(useDistance != -1.0 and dis > farestDis):
+                continue;
+            
+            prop = (dis - vertex_distances[low]) / (vertex_distances[middle] - vertex_distances[low]);
+            pt = CombineTwoNormalsTo(ptLow, 1 - prop, ptMiddle, prop);
+            segment['start'] = pt * model.m_scale;
+            
+            prop = (dis - vertex_distances[low]) / (vertex_distances[high] - vertex_distances[low]);
+            pt = CombineTwoNormalsTo(ptLow, 1 - prop, ptHigh, prop);
+            segment['end'] = pt * model.m_scale;            
+            segment['contour_point'] = contour_point;
+            
+            if(contour_index == -1):
+                segment['contour_index'] = j;
+            else:
+                segment['contour_index'] = contour_index;
+                
+            isolines.append(segment);
+            points.append(segment['start']);
+        
+        for j in range(int(vertex_distances[middle] / gap) + 1, int(vertex_distances[high] / gap)+1):
+            segment = {};
+            dis = gap * j;
+            
+            #Ensure that lines plotted are always below the requested farthest distance
+            if(useDistance != -1.0 and dis > farestDis):
+                continue;
+            
+            prop = (dis - vertex_distances[middle]) / (vertex_distances[high] - vertex_distances[middle]);
+            pt = CombineTwoNormalsTo(ptMiddle, 1 - prop, ptHigh, prop);
+            segment['start'] = pt * model.m_scale;
+            
+            prop = (dis - vertex_distances[low]) / (vertex_distances[high] - vertex_distances[low]);
+            pt = CombineTwoNormalsTo(ptLow, 1 - prop, ptHigh, prop);
+            segment['end'] = pt * model.m_scale;
+            segment['contour_point'] = contour_point;
+            
+            if(contour_index == -1):
+                segment['contour_index'] = j;
+            else:
+                segment['contour_index'] = contour_index;
+            isolines.append(segment);
+            points.append(segment['start']);
+    
+    return isolines;
+
 
