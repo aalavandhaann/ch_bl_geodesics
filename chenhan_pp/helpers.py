@@ -406,11 +406,11 @@ def createIsoContourMesh(context, meshobject, isocontours, isamappedcontour = Fa
     iso_name = meshobject.name+"_isocontours_"+str(meshobject.iso_mesh_count);    
     try:
         existing = context.scene.objects[iso_name];
-        existing.name = "READY_FOR_DELETE";
-        bpy.ops.object.select_all(action="DESELECT");
-        existing.select = True;
-        context.scene.objects.active = existing;
-        bpy.ops.object.delete();
+#         existing.name = "READY_FOR_DELETE";
+#         bpy.ops.object.select_all(action="DESELECT");
+#         existing.select = True;
+#         context.scene.objects.active = existing;
+#         bpy.ops.object.delete();
     except KeyError:
         pass;
     
@@ -686,7 +686,7 @@ def getMappedContourSegments(context, subject, reference, isocontours, reference
     return mappedcontours;
 
 def GetIsoLines(num, meshobject, model = None, vertex_distances= [], *, useDistance = -1.0, contour_index=-1, contour_point=None):
-    
+    print('THE SIZE OF GIVEN VERTEX DISTANCES :::: ', len(vertex_distances));
     if(not model):
         model = RichModel(getBMMesh(bpy.context, meshobject, useeditmode=False), meshobject);
         model.Preprocess();

@@ -77,7 +77,7 @@ class IsoContours(bpy.types.Operator):
         obj = context.active_object;
         context.area.tag_redraw();
         
-        if(not context.scene.isolinesupdated and self.alg):
+        if(not context.scene.isolinesupdated and self.alg and len(self.vertex_distances)):
             self.isolines = GetIsoLines(self.subject.isolines_count+1, self.subject, self.richmodel, self.vertex_distances);
 #             self.isolines = self.alg.GetIsoLines(self.subject.isolines_count+1);
             createIsoContourMesh(context, self.subject, self.isolines);   
@@ -105,8 +105,7 @@ class IsoContours(bpy.types.Operator):
                     if(self.richmodel):
                         vco, vindex, dist = self.kd.find(hitpoint);                        
                         self.alg.addSeedIndex(vindex);        
-                        self.vertex_distances = self.alg.getVertexDistances(vindex);      
-                        print(self.vertex_distances);          
+                        self.vertex_distances = self.alg.getVertexDistances(vindex);     
                         self.isoorigin = self.subject.matrix_world * self.subject.data.vertices[vindex].co;
                         context.scene.isolinesupdated = False;
                         return {'RUNNING_MODAL'};
