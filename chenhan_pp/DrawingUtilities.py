@@ -2,7 +2,7 @@ import bpy, bmesh, bgl, time, math, os, mathutils, sys;
 from bpy_extras.view3d_utils import location_3d_to_region_2d, region_2d_to_vector_3d, region_2d_to_location_3d, region_2d_to_origin_3d
 from bpy_extras import view3d_utils;
 
-def DrawGLLines(self, context, paths, temppaths, color, thickness, LINE_TYPE= "GL_LINE"):
+def DrawGLLines(self, context, paths, temppaths, reflector_paths, reflected_temppaths, color, thickness, LINE_TYPE= "GL_LINE"):
     bgl.glEnable(bgl.GL_BLEND);
     bgl.glBlendFunc(bgl.GL_SRC_ALPHA, bgl.GL_ONE_MINUS_SRC_ALPHA);
     bgl.glEnable(bgl.GL_LINE_SMOOTH);
@@ -21,11 +21,32 @@ def DrawGLLines(self, context, paths, temppaths, color, thickness, LINE_TYPE= "G
         for coord in path:
             bgl.glVertex3f(*coord);    
         
-        bgl.glEnd();   
+        bgl.glEnd();
+    
+    for path in reflector_paths:        
+        bgl.glBegin(bgl.GL_LINE_STRIP);
+        bgl.glColor4f(*color);
+        
+        for coord in path:
+            bgl.glVertex3f(*coord);    
+        
+        bgl.glEnd();
+    
+    
     
     carr = context.scene.temp_path_color;
     color = (carr[0],carr[1],carr[2],1.0);
     for path in temppaths:
+        bgl.glBegin(bgl.GL_LINE_STRIP);
+        bgl.glColor4f(*color);
+        
+        for co in path:
+            bgl.glVertex3f(*co);
+            
+        bgl.glEnd();
+    
+    
+    for path in reflected_temppaths:
         bgl.glBegin(bgl.GL_LINE_STRIP);
         bgl.glColor4f(*color);
         

@@ -141,7 +141,7 @@ class GraphPaths:
     
     def getVertexDistances(self, seed_index):
     	return [];
-
+	
 class ChenhanGeodesics(GraphPaths):
     
     m_all_geos = None;
@@ -248,6 +248,9 @@ class ChenhanGeodesics(GraphPaths):
             
             for eitem in pathp3d:
             	vco = eitem.Get3DPoint(self.m_richmodel);
+            	
+            	print();
+            	
             	if(isFastAlgorithmLoaded()):
             		vco = Vector((vco.x, vco.y, vco.z));
             	path.append(self.m_mesh.matrix_world *  vco);
@@ -260,45 +263,65 @@ class ChenhanGeodesics(GraphPaths):
         
 class AnisotropicGeodesics(ChenhanGeodesics):
     user_gamma = 0.1;    
+    m_reflector_mesh = None;
+    m_reflector_bm_mesh = None;
+    m_reflector_rich_model = None;
     
-    def __init__(self, context, mesh, bm_mesh, richmodel):
+    def __init__(self, context, mesh, bm_mesh, richmodel, reflector=None):
         super().__init__(context, mesh, bm_mesh, richmodel);
         ensurelookuptable(bm_mesh);
-        self.makeMeshUsingCurvatures();
         
-    def makeMeshUsingCurvatures(self):
-    	k1_l, k2_l, sx, p1_l, p2_l, mean, gauss_l = need_curvatures(self.m_bmesh, self.m_mesh);
-    	k1_l = np.abs(k1_l);
-    	k2_l = np.abs(k2_l);
-    	applyColoringForMeshErrors(self.m_context, self.m_mesh, sx, v_group_name = "sx_colors");
-    	print('CALCULATE NEW METRIC AND APPLY ON EDGES ');
-#     	for edge in self.m_richmodel.m_Edges:
-#     		left_vert_index = edge.indexOfLeftVert;
-#     		right_vert_index = edge.indexOfRightVert;
-#     		p3d_left = self.m_richmodel.m_Verts[left_vert_index];
-#     		p3d_right = self.m_richmodel.m_Verts[right_vert_index];
-#     		left_vert = Vector((p3d_left.x, p3d_left.y, p3d_left.z));
-#     		right_vert = Vector((p3d_right.x, p3d_right.y, p3d_right.z));
-#     		v = right_vert - left_vert;
-#     		k1, k2, u1, u2 = k1_l[left_vert_index], k2_l[left_vert_index], p1_l[left_vert_index], p2_l[left_vert_index];
-#     		s_x = abs(k1) - abs(k2);
-#     		lambda_1 = 1.0 + (self.user_gamma * s_x);
-#     		lambda_2 = 1.0 / (1.0 + (self.user_gamma * s_x));
-#     		theta = v.angle(u1);
-# #     		print(edge.indexOfLeftVert, edge.indexOfRightVert, theta, lambda_1, lambda_2);
-#     		gx_v = edge.length * (((lambda_1 * math.cos(theta)**2)) + ((lambda_2 * math.sin(theta)**2)))**0.5;
-# #     		gx_v = 1.0 * ((lambda_1 * math.cos(theta)**2) + (lambda_2 * math.sin(theta)**2))**0.5;
-#     		gx_v = np.array([gx_v]).astype(float)[0];
-#     		edge.length += gx_v;
-#     	
-#     	
-#     	print('COMPUTE OTHER PROPERTIES BASED ON NEW EDGE LENGTHS');
-#     	self.m_richmodel.CollectAndArrangeNeighs();
-#     	self.m_richmodel.ComputeAnglesAroundVerts();
-#     	self.m_richmodel.ComputePlanarCoordsOfIncidentVertForEdges();
-    	print('FINSHED PROCESSING THE ANISOTROPIC EMBEDDING FOR THE GIVEN MODEL');
-# 			ComputeNumOfHoles();
-# 			ComputeNumOfComponents();
-			
-
-
+        if(reflector):
+        	self.m_reflector_mesh = reflector;
+        	self.m_reflector_bm_mesh = getBMMesh(context, reflector, useeditmode=False);
+        	ensurelookuptable(self.m_reflector_bm_mesh);
+        	mesh = reflector;
+        	if(isFastAlgorithmLoaded()):
+	        	verts = [];
+	        	faces = [];
+	        	loops = mesh.data.loops;
+	        	self.m_reflector_rich_model = RichModel();
+	        	for v in mesh.data.vertices:
+	        		p3d = CPoint3D(v.co.x, v.co.y, v.co.z);
+	        		verts.append(p3d);
+	        	for f in mesh.data.polygons:
+	        		f_vids = [loops[lid].vertex_index for lid in f.loop_indices];
+	        		faces.append(CFace(f_vids[0], f_vids[1], f_vids[2]));
+        		
+        		self.m_reflector_rich_model.LoadModel(verts, faces);
+        		self.m_reflector_rich_model.Preprocess();
+        	else:
+	        	self.m_reflector_rich_model = RichModel(self.m_reflector_bm_mesh, reflector);
+	        	self.m_reflector_rich_model.Preprocess();
+    
+    def path_between(self, seed_index, target_index, include_reflected=False):
+    	try:
+    		indice = self.m_seed_indices.index(seed_index);
+    		if(not self.m_all_geos[indice]):
+    			if(isFastAlgorithmLoaded()):
+    				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
+    			else:
+    				alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
+    			alg.Execute();
+    		if(isFastAlgorithmLoaded()):
+    			pathp3d = self.m_all_geos[indice].FindSourceVertex(target_index,[]);
+    		else:
+    			pathp3d, sourceindex = self.m_all_geos[indice].FindSourceVertex(target_index);
+    		path = [];
+    		reflected_path = [];
+    		
+    		for eitem in pathp3d:
+    			vco = eitem.Get3DPoint(self.m_richmodel);
+    			r_vco = None;
+    			if(include_reflected):
+    				r_vco = eitem.Get3DPoint(self.m_reflector_rich_model);
+    			if(isFastAlgorithmLoaded()):
+    				vco = Vector((vco.x, vco.y, vco.z));
+    				if(include_reflected):
+    					r_vco = Vector((r_vco.x, r_vco.y, r_vco.z))				
+    			path.append(self.m_mesh.matrix_world *  vco);
+    			reflected_path.append(self.m_reflector_mesh.matrix_world *  r_vco);
+    		return path, reflected_path;
+    	except ValueError:
+    		print("THE intended seed_index does not exist, so returning NONE");
+    		return None,None;

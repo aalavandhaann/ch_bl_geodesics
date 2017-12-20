@@ -26,6 +26,13 @@ if "bpy" in locals():
 else:
     print("Imported multifiles")
 
+def get_scene_meshes(self, context):
+    templatenames = ["_marker","_joint","_bone","_lines","_cloud", "Template", "Marker"];
+    meshes = [(item.name, item.name, item.name) for item in bpy.data.objects if item.type == "MESH" and not any(word in item.name for word in templatenames)];
+    meshes = [('None', 'None', 'None')] + meshes; 
+    return meshes;
+
+
 class ChenhanGeodesicsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_chenhangeodesicpanel"
     bl_label = "Chenhan Geodesic";
@@ -37,6 +44,9 @@ class ChenhanGeodesicsPanel(bpy.types.Panel):
         #The button to load the humma file and do all preprocessing        
         if(context.active_object):
             layout = self.layout;
+            
+            row = self.layout.row(align=True);
+            row.prop(context.object,"reflectormesh",text='Reflector Mesh');
             
             row = layout.row(align=True);
             row.prop(context.active_object, "show_wire", "Wireframe");
@@ -61,6 +71,8 @@ class ChenhanGeodesicsPanel(bpy.types.Panel):
 
 bpy.types.Object.iso_mesh_count = bpy.props.IntProperty(name="Isomesh count", description="Total Isomeshes", default=0);
 bpy.types.Object.isolines_count = bpy.props.IntProperty(name="Isolines count", description="Total IsoLines", default=10, min=1, max=100);
+bpy.types.Object.reflectormesh = bpy.props.EnumProperty(name="Reflecting mesh",description="Mesh for reflecting the path",items = get_scene_meshes);
+
 
 bpy.types.Scene.path_color = bpy.props.FloatVectorProperty(
     name = "Geodesic Path Color", 

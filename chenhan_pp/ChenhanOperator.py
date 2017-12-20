@@ -50,9 +50,10 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
     
     def getSequencedShortestPath(self, v1, v2):
         path = None;
+        reflected_path = None;
         if(v1 != v2):
-            path = self.chenhan.path_between(v1, v2);                    
-        return path;
+            path, reflected_path = self.chenhan.path_between(v1, v2, self.reflectormesh != None);    
+        return path, reflected_path;
             
     def modal(self, context, event):
         region = context.region;
@@ -102,9 +103,11 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
                 if(len(self.chenhan.getSeedIndices()) > 1):
                     p_indices = self.chenhan.getSeedIndices();
                     
-                    stable_paths = self.getSequencedShortestPath(p_indices[-2], p_indices[-1]);
+                    stable_paths, stable_reflected_paths = self.getSequencedShortestPath(p_indices[-2], p_indices[-1]);
+                    
                     if(stable_paths):
                         self.paths.append(stable_paths);
+                        self.reflected_paths.append(stable_reflected_paths);
                 
                 return {'PASS_THROUGH'};
         
@@ -121,13 +124,15 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
                     p_indices = self.chenhan.getSeedIndices();
                     currentseed = index;
                     
-                    temp_paths = self.getSequencedShortestPath(p_indices[-1], currentseed);
+                    temp_paths, temp_reflected_paths = self.getSequencedShortestPath(p_indices[-1], currentseed);
                     try:
                         del self.temppath3d[0];
+                        del self.reflected_temppath3d[0];
                     except IndexError:
                         pass;
                     if(temp_paths):
                         self.temppath3d.append(temp_paths);
+                        self.reflected_temppath3d.append(temp_reflected_paths);
                     
             context.area.header_text_set("hit: %.4f %.4f %.4f" % tuple(self.hit));
                 
@@ -171,23 +176,32 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         context.scene.objects.active = self.mesh;
         
         self.richmodel = None;
+        
+        self.reflectormesh = None;
+        
         if(not isFastAlgorithmLoaded):
             self.richmodel = RichModel(self.bm, context.active_object);
             self.richmodel.Preprocess();
+        
+        if(self.mesh.reflectormesh != 'None'):
+            self.reflectormesh = context.scene.objects[self.mesh.reflectormesh];
+            
         #self.chenhan = ChenhanGeodesics(context, context.active_object, self.bm, self.richmodel);
-        self.chenhan = AnisotropicGeodesics(context, context.active_object, self.bm, self.richmodel);
+        self.chenhan = AnisotropicGeodesics(context, context.active_object, self.bm, self.richmodel,self.reflectormesh);
         
         if(isFastAlgorithmLoaded()):
             self.richmodel = self.chenhan.getRichModel();
         
         self.paths = [];
+        self.reflected_paths = [];
         self.prev = {};
         self.temppath3d = [];
+        self.reflected_temppath3d = [];
         self.seeds = [];        
         self.currentseed = 0;
         self.currentseed_quad = 0;
         self.kdtree = buildKDTree(context, self.mesh);
-        args = (self, context, self.paths, self.temppath3d, (0.0,1.0,0.0,1.0), 5.0);
+        args = (self, context, self.paths, self.temppath3d, self.reflected_paths, self.reflected_temppath3d, (0.0,1.0,0.0,1.0), 5.0);
         self._handle = bpy.types.SpaceView3D.draw_handler_add(DrawGLLines, args, 'WINDOW', 'POST_VIEW');
         context.window_manager.modal_handler_add(self);
         return {'RUNNING_MODAL'}
