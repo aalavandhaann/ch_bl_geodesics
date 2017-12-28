@@ -298,10 +298,14 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     	try:
     		indice = self.m_seed_indices.index(seed_index);
     		if(not self.m_all_geos[indice]):
-    			if(isFastAlgorithmLoaded()):
-    				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
-    			else:
-    				alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
+    			
+    			if(not self.m_reflector_rich_model):    			
+	    			if(isFastAlgorithmLoaded()):
+	    				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
+	    			else:
+	    				alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
+	    		
+	    		
     			alg.Execute();
     		if(isFastAlgorithmLoaded()):
     			pathp3d = self.m_all_geos[indice].FindSourceVertex(target_index,[]);
