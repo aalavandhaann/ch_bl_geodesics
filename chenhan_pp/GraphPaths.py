@@ -298,7 +298,7 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     	try:
     		indice = self.m_seed_indices.index(seed_index);
     		if(not self.m_all_geos[indice]):
-    			
+    			#Add the else condition or the geodesic will not work. Otherwise remove the if condition and put it back as it was originally
     			if(not self.m_reflector_rich_model):    			
 	    			if(isFastAlgorithmLoaded()):
 	    				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
