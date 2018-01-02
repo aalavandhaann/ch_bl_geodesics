@@ -52,7 +52,7 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         path = None;
         reflected_path = None;
         if(v1 != v2):
-            path, reflected_path = self.chenhan.path_between(v1, v2, self.reflectormesh != None);    
+            path, reflected_path = self.chenhan.path_between(v1, v2, self.reflectormesh != None);
         return path, reflected_path;
             
     def modal(self, context, event):
@@ -178,6 +178,7 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         self.richmodel = None;
         
         self.reflectormesh = None;
+        print('REFLECTOR MESH :::: ', self.mesh.reflectormesh, self.mesh.reflectormesh is None);
         
         if(not isFastAlgorithmLoaded):
             self.richmodel = RichModel(self.bm, context.active_object);

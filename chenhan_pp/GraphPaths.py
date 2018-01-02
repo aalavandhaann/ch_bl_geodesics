@@ -270,7 +270,7 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     def __init__(self, context, mesh, bm_mesh, richmodel, reflector=None):
         super().__init__(context, mesh, bm_mesh, richmodel);
         ensurelookuptable(bm_mesh);
-        
+        print('REFLECTOR SUPPLIED ::: ', reflector);
         if(reflector):
         	self.m_reflector_mesh = reflector;
         	self.m_reflector_bm_mesh = getBMMesh(context, reflector, useeditmode=False);
@@ -304,13 +304,18 @@ class AnisotropicGeodesics(ChenhanGeodesics):
 	    				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
 	    			else:
 	    				alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
-	    		
-	    		
+	    		else:
+	    			if(isFastAlgorithmLoaded()):
+	    				alg = CICHWithFurtherPriorityQueue(self.m_reflector_rich_model, set([seed_index]));
+	    			else:
+	    				alg = CICHWithFurtherPriorityQueue(inputModel=self.m_reflector_rich_model, indexOfSourceVerts=[seed_index]);
     			alg.Execute();
+    			
     		if(isFastAlgorithmLoaded()):
     			pathp3d = self.m_all_geos[indice].FindSourceVertex(target_index,[]);
     		else:
     			pathp3d, sourceindex = self.m_all_geos[indice].FindSourceVertex(target_index);
+    			
     		path = [];
     		reflected_path = [];
     		
@@ -319,12 +324,16 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     			r_vco = None;
     			if(include_reflected):
     				r_vco = eitem.Get3DPoint(self.m_reflector_rich_model);
+    				
     			if(isFastAlgorithmLoaded()):
     				vco = Vector((vco.x, vco.y, vco.z));
     				if(include_reflected):
-    					r_vco = Vector((r_vco.x, r_vco.y, r_vco.z))				
+    					r_vco = Vector((r_vco.x, r_vco.y, r_vco.z));
+    									
     			path.append(self.m_mesh.matrix_world *  vco);
-    			reflected_path.append(self.m_reflector_mesh.matrix_world *  r_vco);
+    			if(r_vco):
+    				reflected_path.append(self.m_reflector_mesh.matrix_world *  r_vco);
+    			
     		return path, reflected_path;
     	except ValueError:
     		print("THE intended seed_index does not exist, so returning NONE");
