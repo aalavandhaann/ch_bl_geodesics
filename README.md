@@ -1,4 +1,4 @@
-# ch_bl_geodesics
+# chenhan_pp
 Geodesics algorithm for Blender using ChenHan algorithm
 
 This Blender-Addon is based on the geodesic algorithm of Shiqing Xin and based on his paper
@@ -16,4 +16,4 @@ Please refer to the wiki section for Install and usage. In case you downloaded t
 IMPORTANT UPDATE
 ----------------
 
-Once you download or clone the repository its named as ch_bl_geodesics. Rename it to chenhan_pp before adding it as an addon to blender. This causes issues in enabling the plugin. After doing this you should be able to resolve this error
+Once you download or clone the repository its named as ch_bl_geodesics. Copy the folder named **chenhan_pp** to the blender addons folder for the plugin to work. Otherwise there would be issues in enabling the plugin. After doing this you should be able to resolve this error
