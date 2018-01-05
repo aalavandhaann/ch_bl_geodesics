@@ -6,8 +6,8 @@ from chenhan_pp.MeshTools import ensurelookuptable, getBMMesh;
 from chenhan_pp.TrimeshCurvatures import need_curvatures;
 __fastAlgorithm = False;
 try:
-	import chenhancc;
-	from chenhancc import CRichModel as RichModel, CICHWithFurtherPriorityQueue, CPoint3D, CFace;
+	import py_chenhancc;
+	from py_chenhancc import CRichModel as RichModel, CICHWithFurtherPriorityQueue, CPoint3D, CFace;
 	__fastAlgorithm = True;
 except ImportError:
 	from chenhan_pp.CICHWithFurtherPriorityQueue import CICHWithFurtherPriorityQueue
@@ -187,7 +187,7 @@ class ChenhanGeodesics(GraphPaths):
     				alg.Execute();
     				
     		alg = self.m_all_geos[indice];	
-    		return [iav.disUptodate for iav in alg.m_InfoAtVertices];
+    		return [iav.disUptodate for iav in alg.GetVertexDistances()];
     		
     	except ValueError:
     		print("THE intended seed_index does not exist, so returning NONE");
