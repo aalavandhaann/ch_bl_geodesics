@@ -401,6 +401,70 @@ def drawLine(a, b, linethickness, linecolor):
     bgl.glVertex3f(*b);
     
     bgl.glEnd();
+    
+# expects the vertices order to be sent by the user. Supply an array of paths [[]]
+def createGeodesicPathMesh(context, meshobject, paths, pathcolor=(0,1,0)):
+    iso_name = meshobject.name+"_geodesicpath";
+    temp_iso_name = meshobject.name+"_geodesicpath";    
+    iso_mesh = bpy.data.meshes.new(temp_iso_name);
+    
+    # Get a BMesh representation
+    bm = bmesh.new()   # create an empty BMesh
+    verts = [];
+    
+    for path in paths:
+        path_verts = [];
+        for vco in path:
+            v = bm.verts.new(vco);
+            path_verts.append(v);
+        verts.append(path_verts);
+    
+    ensurelookuptable(bm);
+    
+    for path in verts:
+        for i in range(1, len(path)):
+            v1 = path[i-1];
+            v2 = path[i];
+            e = bm.edges.new([v1, v2]);
+    
+    bm.to_mesh(iso_mesh);
+    bm.free();
+    iso_mesh_obj = bpy.data.objects.new(temp_iso_name, iso_mesh);
+    iso_mesh_obj.data = iso_mesh;    
+    context.scene.objects.link(iso_mesh_obj);
+    iso_mesh_obj.location = meshobject.location;
+    
+    bpy.ops.object.select_all(action="DESELECT");
+    iso_mesh_obj.select = True;
+    context.scene.objects.active = iso_mesh_obj;
+     
+    bpy.ops.object.convert(target="CURVE");
+    bpy.data.curves[iso_mesh_obj.name].fill_mode = "FULL";
+    bpy.data.curves[iso_mesh_obj.name].bevel_resolution = 6;
+    max_dim = max(iso_mesh_obj.dimensions.x, iso_mesh_obj.dimensions.y, iso_mesh_obj.dimensions.z);
+    bpy.data.curves[iso_mesh_obj.name].bevel_depth = BEVEL_DEPTH_FACTOR * (max_dim*2);
+    
+    print(bpy.data.curves[iso_mesh_obj.name].bevel_depth, BEVEL_DEPTH_FACTOR * max_dim);
+     
+    try:
+        material = bpy.data.materials['IsoContourMaterial'];
+    except:
+        material = bpy.data.materials.new('IsoContourMaterial');
+     
+    material.diffuse_color = pathcolor;
+    material.alpha = 1;
+    material.specular_color = pathcolor;
+     
+    iso_mesh_obj.data.materials.clear();
+    iso_mesh_obj.data.materials.append(material);
+    
+    bpy.ops.object.select_all(action="DESELECT");
+    meshobject.select = True;
+    context.scene.objects.active = meshobject;
+    
+    return iso_mesh_obj;
+    
+    
 
 def createIsoContourMesh(context, meshobject, isocontours, isamappedcontour = False):
     iso_name = meshobject.name+"_isocontours_"+str(meshobject.iso_mesh_count);    
