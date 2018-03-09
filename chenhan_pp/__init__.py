@@ -72,6 +72,7 @@ class ChenhanGeodesicsPanel(bpy.types.Panel):
 bpy.types.Object.iso_mesh_count = bpy.props.IntProperty(name="Isomesh count", description="Total Isomeshes", default=0);
 bpy.types.Object.isolines_count = bpy.props.IntProperty(name="Isolines count", description="Total IsoLines", default=10, min=1, max=100);
 bpy.types.Object.reflectormesh = bpy.props.EnumProperty(name="Reflecting mesh",description="Mesh for reflecting the path",items = get_scene_meshes);
+bpy.types.Scene.isolinesupdated = bpy.props.BoolProperty(name="Isolines Updated",description="Isolines Updated flag",default=False);
 
 
 bpy.types.Scene.path_color = bpy.props.FloatVectorProperty(
