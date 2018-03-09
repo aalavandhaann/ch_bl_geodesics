@@ -432,7 +432,7 @@ def createGeodesicPathMesh(context, meshobject, paths, pathcolor=(0,1,0)):
     iso_mesh_obj = bpy.data.objects.new(temp_iso_name, iso_mesh);
     iso_mesh_obj.data = iso_mesh;    
     context.scene.objects.link(iso_mesh_obj);
-    iso_mesh_obj.location = meshobject.location;
+    iso_mesh_obj.location = meshobject.location.copy();
     
     bpy.ops.object.select_all(action="DESELECT");
     iso_mesh_obj.select = True;
