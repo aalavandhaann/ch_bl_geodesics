@@ -220,7 +220,7 @@ class ChenhanGeodesics(GraphPaths):
         if(removed_index != -1):
             del self.m_all_geos[removed_index];
     
-    def path_between(self, seed_index, target_index):        
+    def path_between(self, seed_index, target_index, local_path=False):        
         try:
             indice = self.m_seed_indices.index(seed_index);
             
@@ -247,13 +247,14 @@ class ChenhanGeodesics(GraphPaths):
             
             
             for eitem in pathp3d:
-            	vco = eitem.Get3DPoint(self.m_richmodel);
-            	
-            	print();
-            	
+            	vco = eitem.Get3DPoint(self.m_richmodel);            	
             	if(isFastAlgorithmLoaded()):
             		vco = Vector((vco.x, vco.y, vco.z));
-            	path.append(self.m_mesh.matrix_world *  vco);
+            	if(not local_path):
+            		path.append(self.m_mesh.matrix_world *  vco);
+            	else:
+            		path.append(vco);
+            	 
             
             return path;
         
