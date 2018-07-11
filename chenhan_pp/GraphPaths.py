@@ -13,7 +13,6 @@ except ImportError:
 	from chenhan_pp.CICHWithFurtherPriorityQueue import CICHWithFurtherPriorityQueue
 # from chenhan.geodesics import CICHWithFurtherPriorityQueue;
 
-
 import numpy as np;
 from mathutils import Vector, Color;
 import matplotlib.cm as cm;
@@ -31,85 +30,82 @@ def isFastAlgorithmLoaded():
 # 		return False;
 
 
-
 def rgb(minimum, maximum, value):
 	minimum, maximum = float(minimum), float(maximum)
-	ratio = 2 * (value-minimum) / (maximum - minimum)
-	b = int(max(0, 255*(1 - ratio)))
-	r = int(max(0, 255*(ratio - 1)))
+	ratio = 2 * (value - minimum) / (maximum - minimum)
+	b = int(max(0, 255 * (1 - ratio)))
+	r = int(max(0, 255 * (ratio - 1)))
 	g = 255 - b - r
 	return r, g, b
 
 
-
-def applyColoringForMeshErrors(context, error_mesh, error_values, *, A = None, B = None, v_group_name = "lap_errors", normalize = False):
-        
-        c = error_values.T;
-        
-        if(not A and not B):
-            B = np.amax(c);
-            A = np.amin(c);
-        
-        norm = clrs.Normalize(vmin=A, vmax=B);
+def applyColoringForMeshErrors(context, error_mesh, error_values, *, A=None, B=None, v_group_name="lap_errors", normalize=False):
+    c = error_values.T;
+    
+    if(not A and not B):
+        B = np.amax(c);
+        A = np.amin(c);
+    
+    norm = clrs.Normalize(vmin=A, vmax=B);
 #         cmap = cm.jet;
-        cmap = get_cmap("jet");
+    cmap = get_cmap("jet");
 #         cmap = clrs.LinearSegmentedColormap.from_list(name="custom", colors=all_colors);
-        m = cm.ScalarMappable(norm=norm, cmap=cmap);
-        final_colors = m.to_rgba(c);
-        final_weights = norm(c);
+    m = cm.ScalarMappable(norm=norm, cmap=cmap);
+    final_colors = m.to_rgba(c);
+    final_weights = norm(c);
+    
+    colors = {};
+    L_error_color_values = {};
+    
+    for v in error_mesh.data.vertices:
+    	(r, g, b, a) = final_colors[v.index];
+    	# color = Color((rgb(A, B, error_values[v.index])));
+    	color = Color((r, g, b));
+    	L_error_color_values[v.index] = color;
+    	colors[v.index] = final_weights[v.index];
+    
+    if(None == error_mesh.vertex_groups.get(v_group_name)):
+        error_mesh.vertex_groups.new(name=v_group_name);
+    
+    if(None == error_mesh.data.vertex_colors.get(v_group_name)):
+        error_mesh.data.vertex_colors.new(v_group_name);
         
-        colors = {};
-        L_error_color_values = {};
+    group_ind = error_mesh.vertex_groups[v_group_name].index;
+    lap_error_colors = error_mesh.data.vertex_colors[v_group_name];
+    
+    bm = getBMMesh(context, error_mesh, False);
+    ensurelookuptable(bm);
+    
+    for v in error_mesh.data.vertices:
+        n = v.index;
+        error_mesh.vertex_groups[group_ind].add([n], colors[v.index], 'REPLACE');
         
-        for v in error_mesh.data.vertices:
-        	(r,g,b,a) = final_colors[v.index];
-        	#color = Color((rgb(A, B, error_values[v.index])));
-        	color = Color((r, g, b));
-        	L_error_color_values[v.index] = color;
-        	colors[v.index] = final_weights[v.index];
+        b_vert = bm.verts[v.index];
         
-        if(None == error_mesh.vertex_groups.get(v_group_name)):
-            error_mesh.vertex_groups.new(name=v_group_name);
+        for l in b_vert.link_loops:
+            lap_error_colors.data[l.index].color = L_error_color_values[v.index];
         
-        if(None == error_mesh.data.vertex_colors.get(v_group_name)):
-            error_mesh.data.vertex_colors.new(v_group_name);
-            
-        group_ind = error_mesh.vertex_groups[v_group_name].index;
-        lap_error_colors = error_mesh.data.vertex_colors[v_group_name];
-        
-        bm = getBMMesh(context, error_mesh, False);
-        ensurelookuptable(bm);
-        
-        for v in error_mesh.data.vertices:
-            n = v.index;
-            error_mesh.vertex_groups[group_ind].add([n], colors[v.index], 'REPLACE');
-            
-            b_vert = bm.verts[v.index];
-            
-            for l in b_vert.link_loops:
-                lap_error_colors.data[l.index].color = L_error_color_values[v.index];
-            
-        bm.free();
-        
-        try:
+    bm.free();
+    
+    try:
 #             material = bpy.data.materials[error_mesh.name+'_'+v_group_name+'ErrorsMaterial'];
-            material = bpy.data.materials[error_mesh.name+'_'+v_group_name];
-        except:
+        material = bpy.data.materials[error_mesh.name + '_' + v_group_name];
+    except:
 #             material = bpy.data.materials.new(error_mesh.name+'_'+v_group_name+'ErrorsMaterial');
-            material = bpy.data.materials.new(error_mesh.name+'_'+v_group_name);
-            error_mesh.data.materials.append(material);
-            
-        material.use_vertex_color_paint = True;   
+        material = bpy.data.materials.new(error_mesh.name + '_' + v_group_name);
+        error_mesh.data.materials.append(material);
+        
+    material.use_vertex_color_paint = True;   
 
 
 class GraphPaths:
-    #Reference to the blender object;
+    # Reference to the blender object;
     m_mesh = None;
-    #Reference to the bm_data;
+    # Reference to the bm_data;
     m_bmesh = None;
-    #Reference to the blender context;
+    # Reference to the blender context;
     m_context = None;
-    #indices of seed paths;
+    # indices of seed paths;
     m_seed_indices = None;
     
     def __init__(self, context, mesh, bm_mesh):
@@ -117,7 +113,6 @@ class GraphPaths:
         self.m_bmesh = bm_mesh;
         self.m_context = context;
         self.m_seed_indices = [];
-    
     
     def removeSeedIndex(self, seed_index):
         try:
@@ -133,7 +128,10 @@ class GraphPaths:
         except ValueError:
             self.m_seed_indices.append(seed_index);
     
-    def path_between(self, seed_index, target_index):        
+    def path_between(self, seed_index, target_index, local_path=False):        
+        return [];
+      
+    def path_between_raw(self, seed_index, target_index):        
         return [];
     
     def getSeedIndices(self):
@@ -141,6 +139,7 @@ class GraphPaths:
     
     def getVertexDistances(self, seed_index):
     	return [];
+
 	
 class ChenhanGeodesics(GraphPaths):
     
@@ -175,7 +174,6 @@ class ChenhanGeodesics(GraphPaths):
     def getRichModel(self):
     	return self.m_richmodel;
     
-    
     def getVertexDistances(self, seed_index):
     	try:
     		indice = self.m_seed_indices.index(seed_index);
@@ -193,7 +191,6 @@ class ChenhanGeodesics(GraphPaths):
     		print("THE intended seed_index does not exist, so returning NONE");
     		return None;
     
-    
     def addSeedIndex(self, seed_index, passive=False):
         super().addSeedIndex(seed_index);
         index = self.m_seed_indices.index(seed_index);
@@ -209,7 +206,7 @@ class ChenhanGeodesics(GraphPaths):
                 	alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
                 alg.Execute();
                 end = time.time();
-                print('TOTAL TIME FOR SEEDING ::: ', (end - start)," seconds");
+                print('TOTAL TIME FOR SEEDING ::: ', (end - start), " seconds");
                 self.m_all_geos.append(alg);
 #                 self.m_all_geos.append(self.algo);
         else:
@@ -237,7 +234,7 @@ class ChenhanGeodesics(GraphPaths):
 #                 self.m_all_geos[indice] = self.algo;
             
             if(isFastAlgorithmLoaded()):
-            	pathp3d = self.m_all_geos[indice].FindSourceVertex(target_index,[]);
+            	pathp3d = self.m_all_geos[indice].FindSourceVertex(target_index, []);
             else:
             	pathp3d, sourceindex = self.m_all_geos[indice].FindSourceVertex(target_index);
             path = [];
@@ -245,22 +242,41 @@ class ChenhanGeodesics(GraphPaths):
 #             print('TABLE OF RESULTING PATHS ::: ');
 #             print(self.algo.m_tableOfResultingPaths);
             
-            
             for eitem in pathp3d:
-            	vco = eitem.Get3DPoint(self.m_richmodel);            	
+            	vco = eitem.Get3DPoint(self.m_richmodel);
             	if(isFastAlgorithmLoaded()):
             		vco = Vector((vco.x, vco.y, vco.z));
             	if(not local_path):
-            		path.append(self.m_mesh.matrix_world *  vco);
+            		path.append(self.m_mesh.matrix_world * vco);
             	else:
             		path.append(vco);
-            	 
             
             return path;
         
         except ValueError:
             print("THE intended seed_index does not exist, so returning NONE");
             return None;
+           
+    def path_between_raw(self, seed_index, target_index, local_path=False):
+	    try:
+	        indice = self.m_seed_indices.index(seed_index);            
+        	if(not self.m_all_geos[indice]):
+		        if(isFastAlgorithmLoaded()):
+		            alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
+		        else:
+		            alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
+		        alg.Execute();
+		     
+	        if(isFastAlgorithmLoaded()):
+		        pathp3d = self.m_all_geos[indice].FindSourceVertex(target_index, []);
+	        else:
+	        	pathp3d, sourceindex = self.m_all_geos[indice].FindSourceVertex(target_index);
+	        
+	        return pathp3d;
+	    except ValueError:
+		    print("THE intended seed_index does not exist, so returning NONE");
+		    return None;
+   		
         
 class AnisotropicGeodesics(ChenhanGeodesics):
     user_gamma = 0.1;    
@@ -299,7 +315,7 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     	try:
     		indice = self.m_seed_indices.index(seed_index);
     		if(not self.m_all_geos[indice]):
-    			#Add the else condition or the geodesic will not work. Otherwise remove the if condition and put it back as it was originally
+    			# Add the else condition or the geodesic will not work. Otherwise remove the if condition and put it back as it was originally
     			if(not self.m_reflector_rich_model):    			
 	    			if(isFastAlgorithmLoaded()):
 	    				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
@@ -313,7 +329,7 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     			alg.Execute();
     			
     		if(isFastAlgorithmLoaded()):
-    			pathp3d = self.m_all_geos[indice].FindSourceVertex(target_index,[]);
+    			pathp3d = self.m_all_geos[indice].FindSourceVertex(target_index, []);
     		else:
     			pathp3d, sourceindex = self.m_all_geos[indice].FindSourceVertex(target_index);
     			
@@ -331,11 +347,11 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     				if(include_reflected):
     					r_vco = Vector((r_vco.x, r_vco.y, r_vco.z));
     									
-    			path.append(self.m_mesh.matrix_world *  vco);
+    			path.append(self.m_mesh.matrix_world * vco);
     			if(r_vco):
-    				reflected_path.append(self.m_reflector_mesh.matrix_world *  r_vco);
+    				reflected_path.append(self.m_reflector_mesh.matrix_world * r_vco);
     			
     		return path, reflected_path;
     	except ValueError:
     		print("THE intended seed_index does not exist, so returning NONE");
-    		return None,None;
+    		return None, None;
