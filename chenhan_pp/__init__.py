@@ -6,7 +6,7 @@ Created on Jun 30, 2016
 import bpy;
 from bpy.props import *;
 from chenhan_pp.ChenhanOperator import ChenhanGeodesicsOperator;
-from chenhan_pp.IsoContours import IsoContours;
+from chenhan_pp.IsoContours import IsoContours, SpecifiedIsoContours;
 
 bl_info = {
     "name": "Chenhan Geodesics",
@@ -32,6 +32,9 @@ def get_scene_meshes(self, context):
     meshes = [('None', 'None', 'None')] + meshes; 
     return meshes;
 
+
+def updateSpecificGRatio(self, context):
+    context.scene.isolinesupdated = False;
 
 class ChenhanGeodesicsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_chenhangeodesicpanel"
@@ -68,9 +71,17 @@ class ChenhanGeodesicsPanel(bpy.types.Panel):
             
             row = layout.row(align=True);
             row.operator(IsoContours.bl_idname, text="IsoContours");
+            
+            row = layout.row(align=True);
+            row.prop(context.active_object, "specific_distance_ratio", "Show at Distance");
+            
+            row = layout.row(align=True);
+            row.operator(SpecifiedIsoContours.bl_idname, text="Specific Isocontours");
 
 bpy.types.Object.iso_mesh_count = bpy.props.IntProperty(name="Isomesh count", description="Total Isomeshes", default=0);
-bpy.types.Object.isolines_count = bpy.props.IntProperty(name="Isolines count", description="Total IsoLines", default=10, min=1, max=100);
+bpy.types.Object.isolines_count = bpy.props.IntProperty(name="Isolines count", description="Total IsoLines", default=10, min=1, max=100, update=updateSpecificGRatio);
+bpy.types.Object.specific_distance_ratio = bpy.props.FloatProperty(name="Specific Distance Ratio", description="Show isolines at distance %", default=0.01, step=0.01, update=updateSpecificGRatio);
+
 bpy.types.Object.reflectormesh = bpy.props.EnumProperty(name="Reflecting mesh",description="Mesh for reflecting the path",items = get_scene_meshes);
 bpy.types.Scene.isolinesupdated = bpy.props.BoolProperty(name="Isolines Updated",description="Isolines Updated flag",default=False);
 
