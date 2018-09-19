@@ -217,7 +217,7 @@ class ChenhanGeodesics(GraphPaths):
         if(removed_index != -1):
             del self.m_all_geos[removed_index];
     
-    def path_between(self, seed_index, target_index, local_path=False):        
+    def path_between(self, seed_index, target_index, local_path=True):        
         try:
             indice = self.m_seed_indices.index(seed_index);
             
@@ -257,7 +257,7 @@ class ChenhanGeodesics(GraphPaths):
             print("THE intended seed_index does not exist, so returning NONE");
             return None;
            
-    def path_between_raw(self, seed_index, target_index, local_path=False):
+    def path_between_raw(self, seed_index, target_index, local_path=True):
 	    try:
 	        indice = self.m_seed_indices.index(seed_index);            
         	if(not self.m_all_geos[indice]):
@@ -311,7 +311,7 @@ class AnisotropicGeodesics(ChenhanGeodesics):
 	        	self.m_reflector_rich_model = RichModel(self.m_reflector_bm_mesh, reflector);
 	        	self.m_reflector_rich_model.Preprocess();
     
-    def path_between(self, seed_index, target_index, include_reflected=False):
+    def path_between(self, seed_index, target_index, local_path=True):
     	try:
     		indice = self.m_seed_indices.index(seed_index);
     		if(not self.m_all_geos[indice]):
@@ -339,17 +339,22 @@ class AnisotropicGeodesics(ChenhanGeodesics):
     		for eitem in pathp3d:
     			vco = eitem.Get3DPoint(self.m_richmodel);
     			r_vco = None;
-    			if(include_reflected):
+    			if(self.m_reflector_rich_model):
     				r_vco = eitem.Get3DPoint(self.m_reflector_rich_model);
     				
     			if(isFastAlgorithmLoaded()):
     				vco = Vector((vco.x, vco.y, vco.z));
-    				if(include_reflected):
+    				if(self.m_reflector_rich_model):
     					r_vco = Vector((r_vco.x, r_vco.y, r_vco.z));
-    									
-    			path.append(self.m_mesh.matrix_world * vco);
+    			if(local_path):
+    				path.append(vco);
+    			else:
+    				path.append(self.m_mesh.matrix_world * vco);
     			if(r_vco):
-    				reflected_path.append(self.m_reflector_mesh.matrix_world * r_vco);
+    				if(local_path):
+    					reflected_path.append(r_vco);    					
+    				else:
+    					reflected_path.append(self.m_reflector_mesh.matrix_world * r_vco);
     			
     		return path, reflected_path;
     	except ValueError:

@@ -23,6 +23,7 @@ from chenhan_pp.MeshData import RichModel
 
 from chenhan_pp.DrawingUtilities import ScreenPoint3D, DrawGLLines
 from chenhan_pp.GraphPaths import ChenhanGeodesics, AnisotropicGeodesics, isFastAlgorithmLoaded;
+from chenhan_pp.helpers import createGeodesicPathMesh;
 
 
 __author__="ashok"
@@ -35,7 +36,7 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
     hit = FloatVectorProperty(name="hit", size=3);
     algorithm_counter = 0;
     
-    def applyMarkerColor(self, object):            
+    def applyMarkerColor(self, object):
         try:
             material = bpy.data.materials[object.name+'_MouseMarkerMaterial'];
         except:
@@ -48,13 +49,21 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         object.data.materials.clear();
         object.data.materials.append(material);
     
-    def getSequencedShortestPath(self, v1, v2):
+    def getSequencedShortestPath(self, v1, v2, local_path = False):
         path = None;
         reflected_path = None;
         if(v1 != v2):
-            path, reflected_path = self.chenhan.path_between(v1, v2, self.reflectormesh != None);
+            path, reflected_path = self.chenhan.path_between(v1, v2, local_path = local_path);
         return path, reflected_path;
-            
+    
+    
+    def endOperator(self, context):
+        context.area.header_text_set();
+        bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW');            
+        if(self.bm):
+            self.bm.free();
+        
+        
     def modal(self, context, event):
         region = context.region;
         rv3d = context.region_data;
@@ -62,19 +71,32 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         context.area.tag_redraw();
         
         #=======================================================================
-        # print('EVENT ::: ', event.type, event.ctrl);
+#         print('EVENT ::: ', event.type, event.value);
         #=======================================================================
         
         if event.type in {'ESC'}:
             print('INDICES :: ', self.chenhan.m_seed_indices);
-            context.area.header_text_set();
-            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW');
             
-            if(self.bm):
-                self.bm.free();
+            self.endOperator(context);
                 
             return {'CANCELLED'};
         
+        elif (event.value == 'PRESS' and event.type == 'A'):
+            diffmouse = time.time() - self.lastmousepress;
+            if(diffmouse > Constants.TIME_INTERVAL_MOUSE_PRESS):
+                self.lastmousepress = time.time();
+            else:
+                return {'RUNNING_MODAL'};
+            
+            if(len(self.reflected_paths)):
+                createGeodesicPathMesh(context, self.mesh, self.for_reflected_paths_as_mesh, suffix='reflectedpaths' );
+            if(len(self.paths)):
+                createGeodesicPathMesh(context, self.mesh, self.for_paths_as_mesh, suffix='geodesicpaths');
+                self.endOperator(context);                
+                return {'FINISHED'};1
+            
+            return {'RUNNING_MODAL'};
+            
         elif (event.value == "PRESS" and event.type == "LEFTMOUSE"):
             
             if(self.pausedrawing):
@@ -104,10 +126,15 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
                     p_indices = self.chenhan.getSeedIndices();
                     
                     stable_paths, stable_reflected_paths = self.getSequencedShortestPath(p_indices[-2], p_indices[-1]);
-                    
                     if(stable_paths):
+                        stable_paths_for_mesh, stable_reflected_paths_for_mesh = self.getSequencedShortestPath(p_indices[-2], p_indices[-1], local_path=True);
+                        
                         self.paths.append(stable_paths);
-                        self.reflected_paths.append(stable_reflected_paths);
+                        self.for_paths_as_mesh.append(stable_paths_for_mesh);
+                        
+                        if(len(stable_reflected_paths)):
+                            self.reflected_paths.append(stable_reflected_paths);
+                            self.for_reflected_paths_as_mesh.append(stable_reflected_paths_for_mesh);
                 
                 return {'PASS_THROUGH'};
         
@@ -178,14 +205,23 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         self.richmodel = None;
         
         self.reflectormesh = None;
-        print('REFLECTOR MESH :::: ', self.mesh.reflectormesh, self.mesh.reflectormesh is None);
-        
         if(not isFastAlgorithmLoaded):
             self.richmodel = RichModel(self.bm, context.active_object);
             self.richmodel.Preprocess();
         
         if(self.mesh.reflectormesh != 'None'):
-            self.reflectormesh = context.scene.objects[self.mesh.reflectormesh];
+            temp_reflectormesh = context.scene.objects[self.mesh.reflectormesh];
+            r_verts = temp_reflectormesh.data.vertices;
+            r_faces = temp_reflectormesh.data.polygons;
+            r_edges = temp_reflectormesh.data.edges;
+            m_verts = self.mesh.data.vertices;
+            m_faces = self.mesh.data.polygons;
+            m_edges = self.mesh.data.edges;
+            
+            if(len(r_verts) == len(m_verts) and len(r_faces) == len(m_faces) and len(r_edges) == len(m_edges)):            
+                self.reflectormesh = context.scene.objects[self.mesh.reflectormesh];
+        
+        print('REFLECTOR MESH :::: ', self.mesh.reflectormesh, self.mesh.reflectormesh is None);
             
         #self.chenhan = ChenhanGeodesics(context, context.active_object, self.bm, self.richmodel);
         self.chenhan = AnisotropicGeodesics(context, context.active_object, self.bm, self.richmodel,self.reflectormesh);
@@ -195,6 +231,10 @@ class ChenhanGeodesicsOperator(bpy.types.Operator):
         
         self.paths = [];
         self.reflected_paths = [];
+        
+        self.for_paths_as_mesh = [];
+        self.for_reflected_paths_as_mesh = [];
+        
         self.prev = {};
         self.temppath3d = [];
         self.reflected_temppath3d = [];

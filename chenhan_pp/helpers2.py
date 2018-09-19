@@ -337,7 +337,7 @@ def drawHollowCircleBillBoard(context, location, radius, resolution=20):
     bgl.glPushMatrix();
 #     bgl.glBegin(bgl.GL_TRIANGLE_FAN);
     bgl.glLineWidth(5.0);  
-    bgl.glBegin(bgl.GL_LINE_LOOP);    
+    bgl.glBegin(bgl.GL_LINE_LOOP);
     x, y = 0.0, 0.0;
     for i in range(resolution):        
         factor = (float(i) / fl_resolution) * TWOPI;

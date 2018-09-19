@@ -403,9 +403,9 @@ def drawLine(a, b, linethickness, linecolor):
     bgl.glEnd();
     
 # expects the vertices order to be sent by the user. Supply an array of paths [[]]
-def createGeodesicPathMesh(context, meshobject, paths, pathcolor=(0,1,0)):
-    iso_name = meshobject.name+"_geodesicpath";
-    temp_iso_name = meshobject.name+"_geodesicpath";    
+def createGeodesicPathMesh(context, meshobject, paths, *, pathcolor=(0,1,0), suffix='geodesicpath'):
+    iso_name = meshobject.name+"_%s"%(suffix);
+    temp_iso_name = meshobject.name+"_%s"%(suffix);
     iso_mesh = bpy.data.meshes.new(temp_iso_name);
     
     # Get a BMesh representation
