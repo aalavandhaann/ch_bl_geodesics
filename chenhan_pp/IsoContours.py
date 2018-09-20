@@ -260,7 +260,7 @@ class IsoContours(bpy.types.Operator):
     def invoke(self, context, event):
         if(context.active_object):
             self.subject = context.active_object;            
-            self.bm = getBMMesh(context, self.subject, False);      
+            self.bm = getBMMesh(context, self.subject, False);
                   
             try:
                 self.richmodel = RichModel(self.bm, self.subject);

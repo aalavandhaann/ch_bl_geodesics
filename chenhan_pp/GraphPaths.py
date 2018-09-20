@@ -217,7 +217,7 @@ class ChenhanGeodesics(GraphPaths):
         if(removed_index != -1):
             del self.m_all_geos[removed_index];
     
-    def path_between(self, seed_index, target_index, local_path=True):        
+    def path_between(self, seed_index, target_index, local_path=True):
         try:
             indice = self.m_seed_indices.index(seed_index);
             
