@@ -17,13 +17,14 @@ from mathutils import Vector, Matrix;
 from mathutils.bvhtree import BVHTree;
 
 from chenhan_pp.MeshData import RichModel
-from chenhan_pp.GraphPaths import ChenhanGeodesics;
+from chenhan_pp.GraphPaths import ChenhanGeodesics, isFastAlgorithmLoaded;
 
 from chenhan_pp.CICHWithFurtherPriorityQueue import CICHWithFurtherPriorityQueue
 from chenhan_pp.helpers import getBMMesh, ensurelookuptable, getBarycentricCoordinate, getCartesianFromBarycentre, getTriangleArea, getGeneralCartesianFromPolygonFace;
 from chenhan_pp.helpers import buildKDTree, getDuplicatedObject, getQuadMesh;
 from chenhan_pp.helpers import getScreenLookAxis, drawLine, drawText, drawTriangle, ScreenPoint3D, createIsoContourMesh;
 from chenhan_pp.helpers import getTriangleMappedPoints, getBarycentricValue, getMappedContourSegments, GetIsoLines;
+from chenhan_pp.GraphPaths import ChenhanGeodesics, AnisotropicGeodesics
 
 __date__ ="$Mar 23, 2015 8:16:11 PM$"
 
@@ -162,14 +163,16 @@ class SpecifiedIsoContours(bpy.types.Operator):
     def invoke(self, context, event):
         if(context.active_object):
             self.subject = context.active_object;            
-            self.bm = getBMMesh(context, self.subject, False);      
-                  
-            try:
-                self.richmodel = RichModel(self.bm, self.subject);
-                self.richmodel.Preprocess();
-            except: 
-                print('CANNOT CREATE RICH MODEL');
-                self.richmodel = None;
+            self.bm = getBMMesh(context, self.subject, False);
+            
+            self.richmodel = None;
+            if(not isFastAlgorithmLoaded):
+                try:
+                    self.richmodel = RichModel(self.bm, self.subject);
+                    self.richmodel.Preprocess();
+                except: 
+                    print('CANNOT CREATE RICH MODEL');
+                    self.richmodel = None;
             
             self.vertex_distances = [];
             self.alg = ChenhanGeodesics(context, self.subject, self.bm, self.richmodel);
@@ -261,14 +264,16 @@ class IsoContours(bpy.types.Operator):
         if(context.active_object):
             self.subject = context.active_object;            
             self.bm = getBMMesh(context, self.subject, False);
-                  
-            try:
-                self.richmodel = RichModel(self.bm, self.subject);
-                self.richmodel.Preprocess();
-            except: 
-                print('CANNOT CREATE RICH MODEL');
-                self.richmodel = None;
             
+            self.richmodel = None;
+            if(not isFastAlgorithmLoaded):
+                try:
+                    self.richmodel = RichModel(self.bm, self.subject);
+                    self.richmodel.Preprocess();
+                except: 
+                    print('CANNOT CREATE RICH MODEL');
+                    self.richmodel = None;
+                                
             self.vertex_distances = [];
             self.alg = ChenhanGeodesics(context, self.subject, self.bm, self.richmodel);
             self.isolines = [];
