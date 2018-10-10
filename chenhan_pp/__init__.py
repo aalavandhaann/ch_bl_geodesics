@@ -36,6 +36,17 @@ def get_scene_meshes(self, context):
 def updateSpecificGRatio(self, context):
     context.scene.isolinesupdated = False;
 
+class IndexItem(bpy.types.PropertyGroup):
+    index = bpy.props.IntProperty(name="Index Item", default=-1);
+
+class Location3D(bpy.types.PropertyGroup):
+    x = bpy.props.FloatProperty(name="X", description="X coordinate", default=0.0);
+    y = bpy.props.FloatProperty(name="Y", description="Y coordinate", default=0.0);
+    z = bpy.props.FloatProperty(name="Z", description="Z coordinate", default=0.0);
+
+bpy.utils.register_class(IndexItem);
+bpy.utils.register_class(Location3D);
+
 class ChenhanGeodesicsPanel(bpy.types.Panel):
     bl_idname = "OBJECT_PT_chenhangeodesicpanel"
     bl_label = "Chenhan Geodesic";
@@ -84,6 +95,11 @@ bpy.types.Object.specific_distance_ratio = bpy.props.FloatProperty(name="Specifi
 
 bpy.types.Object.reflectormesh = bpy.props.EnumProperty(name="Reflecting mesh",description="Mesh for reflecting the path",items = get_scene_meshes);
 bpy.types.Scene.isolinesupdated = bpy.props.BoolProperty(name="Isolines Updated",description="Isolines Updated flag",default=False);
+
+
+bpy.types.Object.isopoints = bpy.props.CollectionProperty(type=Location3D);
+bpy.types.Object.isoindices = bpy.props.CollectionProperty(type=IndexItem);
+bpy.types.Object.contourindices = bpy.props.CollectionProperty(type=IndexItem);
 
 
 bpy.types.Scene.path_color = bpy.props.FloatVectorProperty(
