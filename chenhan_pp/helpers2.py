@@ -301,6 +301,16 @@ def getBarycentricCoordinate(p, a, b, c, *, epsilon=0.0000001,snapping=True):
     
     return u,v,w,ratio, (u >= 0.0 and v >=0.0 and u >=0.0 and ratio <=1.0);
 
+def getSceneViewVector(context, event=None):
+    region = context.region;
+    rv3d = context.region_data;
+    coord = region.width/2.0, region.height/2.0;
+    if(event):
+        coord = event.mouse_region_x, event.mouse_region_y;
+    # get the ray from the viewport and mouse
+    view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord);
+    
+    return view_vector.normalized();
 
 def getScreenLookAxis(context, location=None):
     scene = context.scene
@@ -472,7 +482,7 @@ def drawTriangle(triangle, linethickness, linecolor, fillcolor, drawpoints=False
     if(enable_depth):
         bgl.glDisable(bgl.GL_DEPTH_TEST);
         
-def drawLine(a, b, linethickness, linecolor, enable_depth = False):
+def drawLine(a, b,*, linethickness=5, linecolor=(1,0,0,1), enable_depth = False):
     if(enable_depth):
         bgl.glEnable(bgl.GL_DEPTH_TEST);
     
