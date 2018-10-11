@@ -16,6 +16,16 @@ FRIENDLY_ZOOM_DISTANCE = 3.5;
 TEXT_SCALE_VALUE = 0.001;
 TWOPI = math.pi * 2.0;
 
+def areas_view3d(context):
+    spaces = [];
+    for area in context.window.screen.areas:
+        if(area.type == 'VIEW_3D'):
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    spaces.append(space);
+    
+    return spaces;
+
 def getQuadMesh(context, object):
     bm = getBMMesh(context, object);
     bpy.ops.mesh.select_all(action="SELECT");
