@@ -301,16 +301,14 @@ def getBarycentricCoordinate(p, a, b, c, *, epsilon=0.0000001,snapping=True):
     
     return u,v,w,ratio, (u >= 0.0 and v >=0.0 and u >=0.0 and ratio <=1.0);
 
-def getSceneViewVector(context, event=None):
-    region = context.region;
-    rv3d = context.region_data;
-    coord = region.width/2.0, region.height/2.0;
-    if(event):
-        coord = event.mouse_region_x, event.mouse_region_y;
-    # get the ray from the viewport and mouse
-    view_vector = view3d_utils.region_2d_to_vector_3d(region, rv3d, coord);
-    
-    return view_vector.normalized();
+# https://blender.stackexchange.com/questions/22963/viewport-position-and-direction
+def getSceneViewVector(context, coord=None):
+    space_data = context.space_data;
+    view_vector = Vector((0,0,0));
+    if(space_data.region_3d):
+        r3d = space_data.region_3d;
+        view_vector = (r3d.view_rotation * Vector((0.0,0.0,-1.0))).normalized();
+    return view_vector;
 
 def getScreenLookAxis(context, location=None):
     scene = context.scene

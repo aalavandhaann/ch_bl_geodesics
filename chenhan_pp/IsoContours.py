@@ -77,7 +77,7 @@ class SpecifiedIsoContours(bpy.types.Operator):
         obj = context.active_object;
         context.area.tag_redraw();
         
-#         print(event.type);
+#         print(event.type, event.value);
         
         if(not context.scene.isolinesupdated and self.alg and len(self.vertex_distances)):
             dist_max = max(self.vertex_distances);
@@ -109,7 +109,24 @@ class SpecifiedIsoContours(bpy.types.Operator):
                 
             return {'CANCELLED'}
         
-        if event.type in {'RET'}:
+        if(event.type == 'I' and event.value == 'PRESS'):
+            diffkey = time.time() - self.lastkeypress;
+            if(diffkey > 3):
+                self.lastkeypress = time.time();
+                if(event.type == "I"):
+                    self.hit, onMesh, face_index, hitpoint = ScreenPoint3D(context, event, self.subject, position_mouse = False);
+                    if(self.richmodel or isFastAlgorithmLoaded):
+                        vco, vindex, dist = self.kd.find(hitpoint);                        
+                        self.alg.addSeedIndex(vindex);        
+                        self.vertex_distances = self.alg.getVertexDistances(vindex);
+                        self.max_godesic_distance = np.amax(self.vertex_distances);
+                        self.isoorigin = self.subject.matrix_world * self.subject.data.vertices[vindex].co;
+                        self.constant_points[vindex] = [];
+                        self.vertex_index = vindex;                 
+                        context.scene.isolinesupdated = False;
+                        return {'RUNNING_MODAL'};
+        
+        elif event.type in {'F'}:
             bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW');
             if(self.bm):
                 self.bm.free();            
@@ -134,30 +151,15 @@ class SpecifiedIsoContours(bpy.types.Operator):
                 self.subject.specific_distance_ratio = max(0.01, self.subject.specific_distance_ratio-0.01);
                 return {'RUNNING_MODAL'};
         
-        
-        elif(event.type == 'I' and event.value == 'PRESS'):
-            diffkey = time.time() - self.lastkeypress;
-            if(diffkey > 3):
-                self.lastkeypress = time.time();
-                if(event.type == "I"):
-                    self.hit, onMesh, face_index, hitpoint = ScreenPoint3D(context, event, self.subject, position_mouse = False);
-                    if(self.richmodel):
-                        vco, vindex, dist = self.kd.find(hitpoint);                        
-                        self.alg.addSeedIndex(vindex);        
-                        self.vertex_distances = self.alg.getVertexDistances(vindex);
-                        self.isoorigin = self.subject.matrix_world * self.subject.data.vertices[vindex].co;
-                        self.constant_points[vindex] = [];
-                        self.vertex_index = vindex;                 
-                        context.scene.isolinesupdated = False;
-                        return {'RUNNING_MODAL'};
-        
         elif(event.type == 'MOUSEMOVE'):
             self.hit, onMesh, face_index, hitpoint = ScreenPoint3D(context, event, self.subject, position_mouse = False);
             if(onMesh):
                 if(face_index):
                     vco, vindex, dist = self.kd.find(hitpoint);
                     self.highlight_point = self.subject.matrix_world * self.subject.data.vertices[vindex].co;        
-                    
+        
+        context.area.header_text_set("Maximum Geodesic Distance: %f"%(self.max_godesic_distance));
+         
         return {'PASS_THROUGH'};
         
     def invoke(self, context, event):
@@ -165,7 +167,7 @@ class SpecifiedIsoContours(bpy.types.Operator):
             self.subject = context.active_object;            
             self.bm = getBMMesh(context, self.subject, False);
             
-            self.richmodel = None;
+            self.richmodel = None;            
             if(not isFastAlgorithmLoaded):
                 try:
                     self.richmodel = RichModel(self.bm, self.subject);
@@ -174,7 +176,9 @@ class SpecifiedIsoContours(bpy.types.Operator):
                     print('CANNOT CREATE RICH MODEL');
                     self.richmodel = None;
             
+            
             self.vertex_distances = [];
+            self.max_godesic_distance = 0.0;
             self.alg = ChenhanGeodesics(context, self.subject, self.bm, self.richmodel);
             self.isolines = [];
             self.constant_points = {};
@@ -243,7 +247,7 @@ class IsoContours(bpy.types.Operator):
                 self.lastkeypress = time.time();
                 if(event.type == "I"):
                     self.hit, onMesh, face_index, hitpoint = ScreenPoint3D(context, event, self.subject, position_mouse = False);
-                    if(self.richmodel):
+                    if(self.richmodel or isFastAlgorithmLoaded):
                         vco, vindex, dist = self.kd.find(hitpoint);                        
                         self.alg.addSeedIndex(vindex);        
                         self.vertex_distances = self.alg.getVertexDistances(vindex);     
