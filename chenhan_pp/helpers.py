@@ -8,6 +8,8 @@ from bpy.props import FloatVectorProperty;
 from mathutils import Vector, Matrix;
 from mathutils.bvhtree import BVHTree;
 
+import numpy as np;
+
 from chenhan_pp.MeshData import RichModel, CombinePointAndNormalTo, CombineTwoNormalsTo;
 from chenhan_pp import Constants;
 
@@ -403,7 +405,7 @@ def drawLine(a, b, linethickness, linecolor):
     bgl.glEnd();
     
 # expects the vertices order to be sent by the user. Supply an array of paths [[]]
-def createGeodesicPathMesh(context, meshobject, paths, *, pathcolor=(0,1,0), suffix='geodesicpath'):
+def createGeodesicPathMesh(context, meshobject, paths, *, pathcolor=(0,1,0), suffix='geodesicpath', normals_rotation=0.0):
     iso_name = meshobject.name+"_%s"%(suffix);
     temp_iso_name = meshobject.name+"_%s"%(suffix);
     iso_mesh = bpy.data.meshes.new(temp_iso_name);
@@ -427,6 +429,8 @@ def createGeodesicPathMesh(context, meshobject, paths, *, pathcolor=(0,1,0), suf
             v2 = path[i];
             e = bm.edges.new([v1, v2]);
     
+    ensurelookuptable(bm);
+    bm.normal_update();    
     bm.to_mesh(iso_mesh);
     bm.free();
     iso_mesh_obj = bpy.data.objects.new(temp_iso_name, iso_mesh);
@@ -437,6 +441,27 @@ def createGeodesicPathMesh(context, meshobject, paths, *, pathcolor=(0,1,0), suf
     bpy.ops.object.select_all(action="DESELECT");
     iso_mesh_obj.select = True;
     context.scene.objects.active = iso_mesh_obj;
+    
+    
+    bm = getBMMesh(context, iso_mesh_obj, useeditmode=False);
+    ensurelookuptable(bm);
+    for bmv in bm.verts:
+        v = iso_mesh_obj.data.vertices[bmv.index];
+        vector = None;
+        if(len(bmv.link_edges) == 2):
+            e1 = bmv.link_edges[0];
+            e2 = bmv.link_edges[1];
+            ab = e1.other_vert(bmv).co - v.co;
+            bc = bmv.co - e2.other_vert(bmv).co; 
+            vector = ab + bc;
+        else:
+            e1 = bmv.link_edges[0];
+            ab = e1.other_vert(bmv).co - bmv.co; 
+            vector = ab;
+        axis = vector.normalized();
+        m = Matrix.Rotation(normals_rotation, 4, axis);
+        v.normal = m * v.normal;
+    bm.free();
      
     bpy.ops.object.convert(target="CURVE");
     bpy.data.curves[iso_mesh_obj.name].fill_mode = "FULL";
