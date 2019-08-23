@@ -411,7 +411,7 @@ def createGeodesicPathMesh(context, meshobject, paths, *, pathcolor=(0,1,0), suf
     iso_mesh = bpy.data.meshes.new(temp_iso_name);
     
     # Get a BMesh representation
-    bm = bmesh.new()   # create an empty BMesh
+    bm = bmesh.new();   # create an empty BMesh
     verts = [];
     
     for path in paths:
@@ -462,7 +462,7 @@ def createGeodesicPathMesh(context, meshobject, paths, *, pathcolor=(0,1,0), suf
         m = Matrix.Rotation(normals_rotation, 4, axis);
         v.normal = m * v.normal;
     bm.free();
-     
+    
     bpy.ops.object.convert(target="CURVE");
     bpy.data.curves[iso_mesh_obj.name].fill_mode = "FULL";
     bpy.data.curves[iso_mesh_obj.name].bevel_resolution = 6;

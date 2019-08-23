@@ -182,9 +182,9 @@ class ChenhanGeodesics(GraphPaths):
     				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
     			else:
     				alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
-    				alg.Execute();
+				alg.Execute();
     				
-    		alg = self.m_all_geos[indice];	
+    		alg = self.m_all_geos[indice];
     		return [iav.disUptodate for iav in alg.GetVertexDistances()];
     		
     	except ValueError:

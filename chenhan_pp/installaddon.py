@@ -1,7 +1,9 @@
 import os, sys;
 import subprocess;
+from subprocess import Popen, PIPE;
 import zipfile;
 from platform import platform
+
 
 print(sys.argv);
 
@@ -11,6 +13,11 @@ BLENDER_ADDON_LOCATION = "%s/%s/scripts/addons/"%(BLENDER_ADDON_PREFIX,BLENDER_V
 BLENDER_ADDON_LOCATION = os.path.abspath(BLENDER_ADDON_LOCATION);
 PROJECT_FOLDER = os.path.abspath(sys.argv[1].strip());
 PROJECT_NAME = sys.argv[2].strip();
+EXTRAS_BLENDER_PATH = "";
+try:
+    EXTRAS_BLENDER_PATH = sys.argv[5];
+except IndexError:
+    pass;
 
 print("Prefix: %s\nVERSION: %s\nADDON_LOCATION_FULL: %s\n"%(BLENDER_ADDON_PREFIX, BLENDER_VERSION, BLENDER_ADDON_LOCATION));
 
@@ -34,5 +41,8 @@ if __name__ == "__main__":
     
     zipper.extractall(BLENDER_ADDON_LOCATION);
     zipper.close();
+    if(EXTRAS_BLENDER_PATH != ""):
+        output = subprocess.Popen([EXTRAS_BLENDER_PATH], stdout=subprocess.PIPE).communicate()[0];
+#         out = subprocess.call(EXTRAS_BLENDER_PATH, shell=True);
+        
     
-#     out = subprocess.check_call(['blender.exe']);
