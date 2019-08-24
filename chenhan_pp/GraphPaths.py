@@ -153,22 +153,27 @@ class ChenhanGeodesics(GraphPaths):
         print('DO YOU HAVE THE FAST VERSION ? ', isFastAlgorithmLoaded());
         
         if(isFastAlgorithmLoaded()):
+        	print('CREATE RICHMODEL USING C');
         	verts = [];
         	faces = [];
         	loops = mesh.data.loops;
         	self.m_richmodel = RichModel();
+        	print('CREATE RICHMODEL USING C FOR VERTICES');
         	for v in mesh.data.vertices:
         		p3d = CPoint3D(v.co.x, v.co.y, v.co.z);
         		verts.append(p3d);
+        	print('CREATE RICHMODEL USING C FOR POLYGONS');
         	for f in mesh.data.polygons:
         		f_vids = [loops[lid].vertex_index for lid in f.loop_indices];
         		faces.append(CFace(f_vids[0], f_vids[1], f_vids[2]));
-        		
+        	print('RICHMODEL LOAD THE MODEL');
         	self.m_richmodel.LoadModel(verts, faces);
+        	print('RICHMODEL PREPROCESS');
         	self.m_richmodel.Preprocess();
         else:
         	self.m_richmodel = richmodel;
         
+        print('ENSURE LOOKUP TABLE');
         ensurelookuptable(bm_mesh);
 
     def getRichModel(self):
@@ -182,11 +187,9 @@ class ChenhanGeodesics(GraphPaths):
     				alg = CICHWithFurtherPriorityQueue(self.m_richmodel, set([seed_index]));
     			else:
     				alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
-				alg.Execute();
-    				
+    			alg.Execute();
     		alg = self.m_all_geos[indice];
     		return [iav.disUptodate for iav in alg.GetVertexDistances()];
-    		
     	except ValueError:
     		print("THE intended seed_index does not exist, so returning NONE");
     		return None;
