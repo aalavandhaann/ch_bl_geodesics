@@ -220,6 +220,7 @@ class ChenhanGeodesics(GraphPaths):
         if(removed_index != -1):
             del self.m_all_geos[removed_index];
     
+    #Always returns the path in reverse i.e from the target to the seed
     def path_between(self, seed_index, target_index, local_path=True):
         try:
             indice = self.m_seed_indices.index(seed_index);
