@@ -194,7 +194,7 @@ class ChenhanGeodesics(GraphPaths):
     		print("THE intended seed_index does not exist, so returning NONE");
     		return None;
     
-    def addSeedIndex(self, seed_index, passive=False):
+    def addSeedIndex(self, seed_index, passive=False, log=False):
         super().addSeedIndex(seed_index);
         index = self.m_seed_indices.index(seed_index);
         if(not passive):
@@ -209,7 +209,8 @@ class ChenhanGeodesics(GraphPaths):
                 	alg = CICHWithFurtherPriorityQueue(inputModel=self.m_richmodel, indexOfSourceVerts=[seed_index]);
                 alg.Execute();
                 end = time.time();
-                print('TOTAL TIME FOR SEEDING ::: ', (end - start), " seconds");
+                if(log):
+                	print('TOTAL TIME FOR SEEDING ::: ', (end - start), " seconds");
                 self.m_all_geos.append(alg);
 #                 self.m_all_geos.append(self.algo);
         else:
