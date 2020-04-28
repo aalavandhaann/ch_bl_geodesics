@@ -13,6 +13,10 @@ Suggestions are welcome and any contributions will be useful.
 
 Please refer to the wiki section for Install and usage. In case you downloaded this zip, you should find a folder named docs
 
+Note
+----
+There is nothing extra to be done after installing the fast geodesic plugin from this [repository](https://github.com/aalavandhaann/chenhan_cython). The plugin contains code internally to switch between the pure python implementation or the fast library if installed. 
+
 IMPORTANT UPDATE
 ----------------
 
